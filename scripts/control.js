@@ -78,7 +78,6 @@ function onAppMouseClick(event, value = -1) {
     else {
         fieldData[x][y] = fieldData[x][y] == 1 ? 0 : 1;
         lastValue = fieldData[x][y];
-        console.log(lastValue);
     }
 }
 function getBetween(num, min, max) {
