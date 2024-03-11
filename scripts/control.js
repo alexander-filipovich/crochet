@@ -1,4 +1,4 @@
-function clear() {
+function clearGrid() {
     fieldData = new Array(fieldSize).fill(0).map(() => new Array(fieldSize).fill(0))
 }
 

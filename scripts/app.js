@@ -38,6 +38,10 @@ activeCanvas = "control_x";
 // Listen for window resize events
 window.addEventListener('resize', resizeCanvas);
 
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('clearButton').addEventListener('click', clearGrid);
+});
+
 // Function to update a value in the array and redraw the grid
 setInterval(() => {
     drawGrid();
