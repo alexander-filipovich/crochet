@@ -43,3 +43,7 @@ setInterval(() => {
     drawGrid();
     drawControls();
 }, 100);
+
+setInterval(() => {
+    localStorage.setItem('fieldData', JSON.stringify(fieldData));
+}, 1000);
