@@ -1,3 +1,7 @@
+function clear() {
+    fieldData = new Array(fieldSize).fill(0).map(() => new Array(fieldSize).fill(0))
+}
+
 function resizeCanvas() {
     control.renderer.resize(canvas_control.offsetWidth, canvas_control.offsetHeight);
     control_x.renderer.resize(canvas_control_x.offsetWidth, canvas_control_x.offsetHeight);
@@ -54,15 +58,28 @@ function drawGrid() {
     }
 }
 
-function onAppMouseClick(event) {
+function onAppMouseMove(event){
+    onAppMouseClick(event, lastValue);
+}
+function onAppMouseClick(event, value = -1) {
     activeCanvas = "app";
+    var rect = canvas.getBoundingClientRect();
+    if (event.pageX < rect.left || event.pageX > rect.right || event.pageY < rect.top || event.pageY > rect.bottom) {
+        return;
+    }
     const x = Math.floor(event.offsetX/squareSize)+fieldOffset.X;
     const y = Math.floor(event.offsetY/squareSize)+fieldOffset.Y;
     if (x > fieldSize || y > fieldSize) {
         return
     }
-    fieldData[x][y] = fieldData[x][y] == 1 ? 0 : 1;
-    drawGrid();
+    if (value != -1) {
+        fieldData[x][y] = value;
+    }
+    else {
+        fieldData[x][y] = fieldData[x][y] == 1 ? 0 : 1;
+        lastValue = fieldData[x][y];
+        console.log(lastValue);
+    }
 }
 function getBetween(num, min, max) {
     return Math.min(Math.max(min, num), max);
@@ -86,37 +103,34 @@ function onMouseScroll(event) {
         fieldOffset.Y += scrollSensitivity * direction;
         fieldOffset.Y = getBetween(fieldOffset.Y, 0, fieldSize-Math.floor(size.y/2));
     }
-    drawGrid();
-    drawControls();
 }
 function onControlXClick(event) {
     activeCanvas = "control_x";
-    //console.log(event.offsetX);
+    var rect = canvas_control_x.getBoundingClientRect();
+    if (event.pageX < rect.left || event.pageX > rect.right) {
+        return;
+    }
     let slider_position = getBetween(event.offsetX - slider_x_size/2, 0, canvas_control_x.offsetWidth - slider_x_size)
     offset_new = Math.floor(slider_position*((fieldSize+size.x/2)/canvas_control_x.offsetWidth));
     if (offset_new != fieldOffset.X) {
         fieldOffset.X = offset_new;
-        drawGrid();
-        drawControls();
     }
 }
 function onControlXMouseMove(event) {
-    if (isMouseDown) {
         onControlXClick(event);
-    }
 }
 function onControlYClick(event) {
     activeCanvas = "control_y";
+    var rect = canvas_control_y.getBoundingClientRect();
+    if (event.pageY < rect.top || event.pageY > rect.bottom) {
+        return;
+    }
     let slider_position = getBetween(event.offsetY - slider_y_size/2, 0, canvas_control_y.offsetHeight - slider_y_size)
     let offset_new = Math.floor(slider_position*((fieldSize+size.y/2)/canvas_control_y.offsetHeight));
     if (offset_new != fieldOffset.Y) {
-        fieldOffset.Y =offset_new;
-        drawGrid();
-        drawControls();
+        fieldOffset.Y = offset_new;
     }
 }
 function onControlYMouseMove(event) {
-    if (isMouseDown) {
-        onControlYClick(event);
-    }
+    onControlYClick(event);
 }

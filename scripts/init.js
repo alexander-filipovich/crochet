@@ -42,6 +42,7 @@ let fieldOffset = {
     Y: 0
 };
 let fieldData = new Array(fieldSize).fill(0).map(() => new Array(fieldSize).fill(0));
+let lastValue = 0;
 
 let slider_x_pos;
 let slider_x_size;

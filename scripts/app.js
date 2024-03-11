@@ -19,7 +19,6 @@ window.addEventListener('mouseup', function(event) {
 window.addEventListener('wheel', onMouseScroll, { passive: false }); 
 control_x.view.addEventListener('mousedown', onControlXClick);
 control_y.view.addEventListener('mousedown', onControlYClick);
-control_y.view.addEventListener('mousemove', onControlYMouseMove);
 
 app.view.addEventListener('mousedown', onAppMouseClick);
 
@@ -28,8 +27,11 @@ window.addEventListener('mousemove', function(event) {
     if (Date.now() - lastEventTimestamp < 200) {
         //return;
     }
-    if (activeCanvas == "control_x") {onControlXMouseMove(event)}
-    else if (activeCanvas == "control_y") {onControlYMouseMove(event)}
+    if (isMouseDown) {
+        if (activeCanvas == "control_x") {onControlXMouseMove(event)}
+        else if (activeCanvas == "control_y") {onControlYMouseMove(event)}
+        else if (activeCanvas == "app") {onAppMouseMove(event)}
+    }
     lastEventTimestamp = Date.now();
 });
 activeCanvas = "control_x";
@@ -37,3 +39,7 @@ activeCanvas = "control_x";
 window.addEventListener('resize', resizeCanvas);
 
 // Function to update a value in the array and redraw the grid
+setInterval(() => {
+    drawGrid();
+    drawControls();
+}, 100);
