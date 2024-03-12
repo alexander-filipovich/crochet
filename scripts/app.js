@@ -39,7 +39,19 @@ activeCanvas = "control_x";
 window.addEventListener('resize', resizeCanvas);
 
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('clearButton').addEventListener('click', clearGrid);
+    const drawCrossesCheckbox = document.getElementById('drawCrossesCheckbox');
+
+    const sizeXInput = document.getElementById('sizeXInput');
+    const sizeYInput = document.getElementById('sizeYInput');
+    sizeXInput.value = fieldSize.X;
+    sizeYInput.value = fieldSize.Y;
+
+    const clearButton = document.getElementById('clearButton');
+
+    drawCrossesCheckbox.addEventListener('change', () => {setDrawCrosses(drawCrossesCheckbox.checked)});
+    sizeXInput.addEventListener('change', setFieldSize);
+    sizeYInput.addEventListener('change', setFieldSize);
+    clearButton.addEventListener('click', clearGrid);
 });
 
 // Function to update a value in the array and redraw the grid
@@ -50,4 +62,5 @@ setInterval(() => {
 
 setInterval(() => {
     localStorage.setItem('fieldData', JSON.stringify(fieldData));
+    localStorage.setItem('fieldSize', JSON.stringify(fieldSize));
 }, 1000);

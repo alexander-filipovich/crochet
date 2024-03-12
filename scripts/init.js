@@ -1,4 +1,5 @@
 let isMouseDown = false;
+let drawCrosses = false;
 let activeCanvas = NaN;
 let lastEventTimestamp = Date.now();
 
@@ -36,16 +37,23 @@ const minSquareSize = 20;
 const maxSquareSize = 5*minSquareSize;
 let squareSize = minSquareSize;
 
-const fieldSize = 1000;
+const fieldMaxSize = 1000;
+let fieldSizeStored = localStorage.getItem('fieldSize');
+const fieldSize = fieldSizeStored ? JSON.parse(fieldSizeStored) : {
+    X: 50,
+    Y: 50
+}
 let fieldOffset = {
     X: 0,
     Y: 0
 };
 let fieldDataStored = localStorage.getItem('fieldData');
-let fieldData = fieldDataStored ? JSON.parse(fieldDataStored) : new Array(fieldSize).fill(0).map(() => new Array(fieldSize).fill(0));
+let fieldData = fieldDataStored ? JSON.parse(fieldDataStored) : new Array(fieldMaxSize).fill(0).map(() => new Array(fieldMaxSize).fill(0));
 let lastValue = 0;
 
 let slider_x_pos;
 let slider_x_size;
 let slider_y_pos;
 let slider_y_size;
+
+const crossTexture = PIXI.Texture.from('images/cross_128px.png');

@@ -1,5 +1,21 @@
+function setFieldSize() {
+    const sizeX = document.getElementById('sizeXInput').value;
+    const sizeY = document.getElementById('sizeYInput').value;
+
+    fieldSize.X = getBetween(Number(sizeX), 1, fieldMaxSize);
+    fieldSize.Y = getBetween(Number(sizeY), 1, fieldMaxSize);
+    fieldOffset.X = getBetween(fieldOffset.X, 0, Math.max(0, fieldSize.X-Math.floor(size.x/2)));
+    fieldOffset.Y = getBetween(fieldOffset.Y, 0, Math.max(0, fieldSize.Y-Math.floor(size.y/2)));
+
+    drawGrid();
+    drawControls();
+}
+function setDrawCrosses(value) {
+    console.log(value);
+    drawCrosses = value;
+}
 function clearGrid() {
-    fieldData = new Array(fieldSize).fill(0).map(() => new Array(fieldSize).fill(0))
+    fieldData = new Array(fieldMaxSize).fill(0).map(() => new Array(fieldMaxSize).fill(0))
 }
 
 function resizeCanvas() {
@@ -18,8 +34,8 @@ function drawControls() {
     control_x.stage.removeChildren();
     let slider_x = new PIXI.Graphics();
     slider_x.beginFill(0xFFFF00);
-    slider_x_pos = Math.floor(fieldOffset.X/(fieldSize+size.x/2)*canvas_control_x.offsetWidth);
-    slider_x_size = Math.floor(size.x/(fieldSize+size.x/2)*canvas_control_x.offsetWidth);
+    slider_x_pos = Math.floor(fieldOffset.X/(fieldSize.X+size.x/2)*canvas_control_x.offsetWidth);
+    slider_x_size = Math.floor(size.x/(fieldSize.X+size.x/2)*canvas_control_x.offsetWidth);
     slider_x.drawRect(slider_x_pos, 0, slider_x_size, canvas_control_x.offsetHeight);
     slider_x.endFill();
     control_x.stage.addChild(slider_x);
@@ -27,8 +43,8 @@ function drawControls() {
     control_y.stage.removeChildren();
     let slider_y = new PIXI.Graphics();
     slider_y.beginFill(0xFFFF00);
-    slider_y_pos = Math.floor(fieldOffset.Y/(fieldSize+size.y/2)*canvas_control_y.offsetHeight);
-    slider_y_size = Math.floor(size.y/(fieldSize+size.y/2)*canvas_control_y.offsetHeight);
+    slider_y_pos = Math.floor(fieldOffset.Y/(fieldSize.Y+size.y/2)*canvas_control_y.offsetHeight);
+    slider_y_size = Math.floor(size.y/(fieldSize.Y+size.y/2)*canvas_control_y.offsetHeight);
     slider_y.drawRect(0, slider_y_pos, canvas_control_x.offsetWidth, slider_y_size);
     slider_y.endFill();
     control_y.stage.addChild(slider_y);
@@ -41,19 +57,39 @@ function drawGrid() {
         for (let y = 0; y < size.y+1; y++) {
             let square = new PIXI.Graphics();
             let color;
-            if (x+fieldOffset.X >= fieldSize || y+fieldOffset.Y >= fieldSize) {
+            if (x+fieldOffset.X >= fieldSize.X || y+fieldOffset.Y >= fieldSize.Y) {
                 color = backgroundColor;
             }
             else if (fieldData[x+fieldOffset.X][y+fieldOffset.Y] == 1) {
                 color = 0xFFFF00;
             }
             else {
-                color = ((x+y)%2 == 0) ? 0xFFFFFF : 0xF0F0F0;
+                color = (y%2 == 0) ? 0xFFFFFF : 0xF0F0F0;
             }
             square.beginFill(color);
             square.drawRect(x * squareSize+1, y * squareSize+1, squareSize-2, squareSize-2);
             square.endFill();
             app.stage.addChild(square);
+        }
+    }
+
+    if (drawCrosses) {
+        for (let x = 0; x < size.x+1; x++) {
+            for (let y = 0; y < size.y-1; y++) {
+                if (x+fieldOffset.X >= fieldSize.X || y+fieldOffset.Y >= fieldSize.Y) {
+                    continue;
+                }
+                if (fieldData[x+fieldOffset.X][y+fieldOffset.Y] % 2 == (y+fieldOffset.Y) % 2&& 
+                    fieldData[x+fieldOffset.X][y+fieldOffset.Y] == fieldData[x+fieldOffset.X][y+fieldOffset.Y+1] && 
+                    fieldData[x+fieldOffset.X][y+fieldOffset.Y] == fieldData[x+fieldOffset.X][y+fieldOffset.Y+2]) {
+                    const cross = new PIXI.Sprite(crossTexture);
+                    cross.x = x * squareSize+2;
+                    cross.y = y * squareSize+2;
+                    cross.width = squareSize-4;
+                    cross.height = squareSize-4;
+                    app.stage.addChild(cross);
+                }
+            }
         }
     }
 }
@@ -69,7 +105,7 @@ function onAppMouseClick(event, value = -1) {
     }
     const x = Math.floor(event.offsetX/squareSize)+fieldOffset.X;
     const y = Math.floor(event.offsetY/squareSize)+fieldOffset.Y;
-    if (x > fieldSize || y > fieldSize) {
+    if (x > fieldSize.X || y > fieldSize.Y) {
         return
     }
     if (value != -1) {
@@ -81,7 +117,11 @@ function onAppMouseClick(event, value = -1) {
     }
 }
 function getBetween(num, min, max) {
-    return Math.min(Math.max(min, num), max);
+    if (num < min)
+        return min;
+    if (num > max)
+        return max;
+    return num
 }
 function onMouseScroll(event) {
     const direction = Math.sign(event.deltaY);
@@ -96,11 +136,11 @@ function onMouseScroll(event) {
     }
     else if (event.shiftKey) {
         fieldOffset.X += scrollSensitivity * direction;
-        fieldOffset.X = getBetween(fieldOffset.X, 0, fieldSize-Math.floor(size.x/2));
+        fieldOffset.X = getBetween(fieldOffset.X, 0, Math.max(0, fieldSize.X-Math.floor(size.x/2)));
     }
     else {
         fieldOffset.Y += scrollSensitivity * direction;
-        fieldOffset.Y = getBetween(fieldOffset.Y, 0, fieldSize-Math.floor(size.y/2));
+        fieldOffset.Y = getBetween(fieldOffset.Y, 0, Math.max(0, fieldSize.Y-Math.floor(size.y/2)));
     }
 }
 function onControlXClick(event) {
@@ -110,7 +150,7 @@ function onControlXClick(event) {
         return;
     }
     let slider_position = getBetween(event.offsetX - slider_x_size/2, 0, canvas_control_x.offsetWidth - slider_x_size)
-    offset_new = Math.floor(slider_position*((fieldSize+size.x/2)/canvas_control_x.offsetWidth));
+    offset_new = Math.floor(slider_position*((fieldSize.X+size.x/2)/canvas_control_x.offsetWidth));
     if (offset_new != fieldOffset.X) {
         fieldOffset.X = offset_new;
     }
@@ -125,7 +165,7 @@ function onControlYClick(event) {
         return;
     }
     let slider_position = getBetween(event.offsetY - slider_y_size/2, 0, canvas_control_y.offsetHeight - slider_y_size)
-    let offset_new = Math.floor(slider_position*((fieldSize+size.y/2)/canvas_control_y.offsetHeight));
+    let offset_new = Math.floor(slider_position*((fieldSize.Y+size.y/2)/canvas_control_y.offsetHeight));
     if (offset_new != fieldOffset.Y) {
         fieldOffset.Y = offset_new;
     }

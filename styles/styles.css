@@ -12,6 +12,9 @@ body, html {
     padding: 10px;
     box-sizing: border-box;
 }
+.input {
+    width: 90%;    
+}
 .content {
     float: left;
     width: 85%;
