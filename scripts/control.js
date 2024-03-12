@@ -75,8 +75,8 @@ function drawGrid() {
 
     if (drawCrosses) {
         for (let x = 0; x < size.x+1; x++) {
-            for (let y = 0; y < size.y-1; y++) {
-                if (x+fieldOffset.X >= fieldSize.X || y+fieldOffset.Y >= fieldSize.Y) {
+            for (let y = 0; y < size.y+1; y++) {
+                if (x+fieldOffset.X >= fieldSize.X || y+fieldOffset.Y+2 >= fieldSize.Y) {
                     continue;
                 }
                 if (fieldData[x+fieldOffset.X][y+fieldOffset.Y] % 2 == (y+fieldOffset.Y) % 2&& 
