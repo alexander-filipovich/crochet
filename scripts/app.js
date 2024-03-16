@@ -52,6 +52,9 @@ document.addEventListener('DOMContentLoaded', function() {
     sizeXInput.addEventListener('change', setFieldSize);
     sizeYInput.addEventListener('change', setFieldSize);
     clearButton.addEventListener('click', clearGrid);
+    
+    const excelInput = document.getElementById('input-excel');
+    excelInput.addEventListener('change', (e) => {parseExcel(e)});
 });
 
 // Function to update a value in the array and redraw the grid

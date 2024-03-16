@@ -1,6 +1,15 @@
-function setFieldSize() {
-    const sizeX = document.getElementById('sizeXInput').value;
-    const sizeY = document.getElementById('sizeYInput').value;
+// Field functions
+
+function setFieldSize(x = NaN, y = NaN) {
+    const sizeXInput = document.getElementById('sizeXInput');
+    const sizeYInput = document.getElementById('sizeYInput');
+    if (x) 
+        sizeXInput.value = x;
+    if (y) 
+        sizeYInput.value = y;
+
+    const sizeX = sizeXInput.value;
+    const sizeY = sizeYInput.value;
 
     fieldSize.X = getBetween(Number(sizeX), 1, fieldMaxSize);
     fieldSize.Y = getBetween(Number(sizeY), 1, fieldMaxSize);
@@ -11,7 +20,7 @@ function setFieldSize() {
     drawControls();
 }
 function setDrawCrosses(value) {
-    console.log(value);
+    //console.log(value);
     drawCrosses = value;
 }
 function clearGrid() {
@@ -172,4 +181,46 @@ function onControlYClick(event) {
 }
 function onControlYMouseMove(event) {
     onControlYClick(event);
+}
+
+
+
+
+// Excel parser
+
+function parseExcel(e) {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+        const arrayBuffer = e.target.result;
+        const data = new Uint8Array(arrayBuffer);
+        let binaryString = "";
+
+        for(let i = 0; i < data.length; i++) {
+            binaryString += String.fromCharCode(data[i]);
+        }
+        
+        const workbook = XLSX.read(binaryString, {
+            type: 'binary',
+            cellStyles: true
+        });
+        //console.log(workbook);
+    
+        let first_sheet_name = workbook.SheetNames[0];
+        let worksheet = workbook.Sheets[first_sheet_name];
+    
+        const range = XLSX.utils.decode_range(worksheet['!ref']);
+        clearGrid();
+        for (let R = range.s.r; R <= range.e.r; R++) {
+            for (let C = range.s.c; C <= range.e.c; C++) {
+                //console.log(R, C);
+                let cell_ref = XLSX.utils.encode_cell({r: R, c: C}); // Create cell reference
+                let cell = worksheet[cell_ref];
+                //console.log(cell_ref, cell);
+                fieldData[C][R] = cell?.s?.bgColor?.rgb ? 1 : 0;
+            }
+        }
+    };
+    reader.readAsArrayBuffer(file);
 }

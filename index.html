@@ -6,7 +6,8 @@
     <title>PixiJS Grid</title>
     <link rel="icon" type="image/x-icon" href="images/favicon.ico">
     <link rel="stylesheet" href="styles/styles.css">
-    <script src="scripts/pixi.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.x/dist/pixi.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
     <div class="sidebar">
@@ -14,6 +15,7 @@
         <input class="input" type="number" min="10" max="1000" id="sizeXInput" placeholder="Enter a X size (10-1000)"><br>
         <input class="input" type="number" min="10" max="1000" id="sizeYInput" placeholder="Enter a Y size (10-1000)"><br>
         <button id="clearButton">Clear</button><br>
+        <input type="file" id="input-excel"><br>
     </div>
 
     <div class="content">
