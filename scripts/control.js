@@ -1,11 +1,11 @@
 // Field functions
 
-function setFieldSize(x = 0, y = 0) {
+function setFieldSize(x = null, y = null) {
     const sizeXInput = document.getElementById('sizeXInput');
     const sizeYInput = document.getElementById('sizeYInput');
 
-    const sizeX = (x != 0) ? x : Number(sizeXInput.value);
-    const sizeY = (y != 0) ? y : Number(sizeYInput.value);
+    const sizeX = x ? x : Number(sizeXInput.value);
+    const sizeY = y ? y : Number(sizeYInput.value);
 
     fieldSize.X = getBetween(sizeX, 10, fieldMaxSize);
     fieldSize.Y = getBetween(sizeY, 10, fieldMaxSize);
@@ -38,6 +38,14 @@ function resizeApp() {
 }
 
 function drawControls() {
+    control.stage.removeChildren()
+    const state = new PIXI.Sprite(cursorStates[cursorState].texture);
+    state.x = 0;
+    state.y = 0;
+    state.width = canvas_control.offsetWidth;
+    state.height = canvas_control.offsetHeight;
+    control.stage.addChild(state);
+    
     control_x.stage.removeChildren();
     let slider_x = new PIXI.Graphics();
     slider_x.beginFill(0xFFFF00);
@@ -101,28 +109,76 @@ function drawGrid() {
     }
 }
 
-function onAppMouseMove(event){
-    onAppMouseClick(event, lastValue);
+function onControlClick() {
+    cursorState = (cursorState+1) % cursorStates.length;
 }
-function onAppMouseClick(event, value = -1) {
-    activeCanvas = "app";
-    var rect = canvas.getBoundingClientRect();
-    if (event.pageX < rect.left || event.pageX > rect.right || event.pageY < rect.top || event.pageY > rect.bottom) {
-        return;
-    }
-    const x = Math.floor(event.offsetX/squareSize)+fieldOffset.X;
-    const y = Math.floor(event.offsetY/squareSize)+fieldOffset.Y;
+
+function getRelativeRectPosition(event) {
+    const posX = event.offsetX; 
+    const posY = event.offsetY;
+    const x = Math.floor(posX/squareSize);
+    const y = Math.floor(posY/squareSize);
+    return {x: x, y: y}
+}
+function getRealRectPosition(event) {
+    const relativePos = getRelativeRectPosition(event);
+    const x = relativePos.x+fieldOffset.X;
+    const y = relativePos.y+fieldOffset.Y;
     if (x > fieldSize.X || y > fieldSize.Y) {
-        return
+        return null
     }
-    if (value != -1) {
+    return {x: x, y: y}
+}
+
+function changeRectColor(event, value = null) {
+    const pos = getRealRectPosition(event);
+    if (!pos) return;
+    
+    let x, y;
+    x = pos.x; 
+    y = pos.y;
+
+    if (value != null) {
         fieldData[x][y] = value;
     }
     else {
         fieldData[x][y] = fieldData[x][y] == 1 ? 0 : 1;
-        lastValue = fieldData[x][y];
+    }
+    return fieldData[x][y];
+}
+
+function onAppMouseDown(event) {
+    activeCanvas = "app";
+    if (cursorStates[cursorState].state == "draw") {
+        lastValue = changeRectColor(event);
+    }
+    if (cursorStates[cursorState].state == "move") {
+        moveState.rect = getRealRectPosition(event);
     }
 }
+function onAppMouseUp(event) {
+    if (cursorStates[cursorState].state == "move") {
+        moveState.rect = null;
+    }
+}
+function onAppMouseMove(event) {
+    var rect = canvas.getBoundingClientRect();
+    if (event.pageX < rect.left || event.pageX > rect.right || event.pageY < rect.top || event.pageY > rect.bottom) {
+        return;
+    }
+    if (cursorStates[cursorState].state == "draw") {
+        changeRectColor(event, lastValue); 
+    }
+    else if (cursorStates[cursorState].state == "move") {
+        const pos = getRelativeRectPosition(event);
+        fieldOffset.X = moveState.rect.x-pos.x;
+        fieldOffset.Y = moveState.rect.y-pos.y;
+        fieldOffset.X = getBetween(fieldOffset.X, 0, Math.max(0, fieldSize.X-Math.floor(size.x/2)));
+        fieldOffset.Y = getBetween(fieldOffset.Y, 0, Math.max(0, fieldSize.Y-Math.floor(size.y/2)));
+    }
+    else if (cursorStates[cursorState].state == "select") {}
+}
+
 function getBetween(num, min, max) {
     if (num < min)
         return min;

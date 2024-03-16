@@ -16,17 +16,16 @@ window.addEventListener('mouseup', function(event) {
     isMouseDown = false;
 });
 
+control.view.addEventListener('mousedown', onControlClick);
+
 window.addEventListener('wheel', onMouseScroll, { passive: false }); 
 control_x.view.addEventListener('mousedown', onControlXClick);
 control_y.view.addEventListener('mousedown', onControlYClick);
 
-app.view.addEventListener('mousedown', onAppMouseClick);
-
+app.view.addEventListener('mousedown', onAppMouseDown);
+app.view.addEventListener('mouseup',   onAppMouseUp);
 
 window.addEventListener('mousemove', function(event) {
-    if (Date.now() - lastEventTimestamp < 200) {
-        //return;
-    }
     if (isMouseDown) {
         if (activeCanvas == "control_x") {onControlXMouseMove(event)}
         else if (activeCanvas == "control_y") {onControlYMouseMove(event)}

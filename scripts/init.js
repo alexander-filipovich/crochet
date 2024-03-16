@@ -3,7 +3,7 @@ let drawCrosses = false;
 let activeCanvas = NaN;
 let lastEventTimestamp = Date.now();
 
-const canvas_control = document.getElementById("canvas_top_left");
+const canvas_control = document.getElementById("canvas_control");
 const control = new PIXI.Application({
     backgroundColor: 0xAAAAAA 
 });
@@ -57,3 +57,15 @@ let slider_y_pos;
 let slider_y_size;
 
 const crossTexture = PIXI.Texture.from('images/cross_128px.png');
+const cursorBaseTexture = PIXI.Texture.from('images/cursor.png');
+
+let cursorState = 0;
+const cursorStates = [
+    {state: 'draw',   texture: new PIXI.Texture(cursorBaseTexture, new PIXI.Rectangle(375, 25, 150, 150))},
+    {state: 'move',   texture: new PIXI.Texture(cursorBaseTexture, new PIXI.Rectangle(575, 200, 150, 150))},
+    {state: 'select', texture: new PIXI.Texture(cursorBaseTexture, new PIXI.Rectangle(575, 400, 150, 150))}
+];
+
+const moveState = {
+    rect: null
+}
