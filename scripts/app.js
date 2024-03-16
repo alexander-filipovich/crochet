@@ -49,8 +49,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const clearButton = document.getElementById('clearButton');
 
     drawCrossesCheckbox.addEventListener('change', () => {setDrawCrosses(drawCrossesCheckbox.checked)});
-    sizeXInput.addEventListener('change', setFieldSize);
-    sizeYInput.addEventListener('change', setFieldSize);
+    sizeXInput.addEventListener('change', () => {setFieldSize()});
+    sizeYInput.addEventListener('change', () => {setFieldSize()});
     clearButton.addEventListener('click', clearGrid);
     
     const excelInput = document.getElementById('input-excel');

@@ -1,26 +1,24 @@
 // Field functions
 
-function setFieldSize(x = NaN, y = NaN) {
+function setFieldSize(x = 0, y = 0) {
     const sizeXInput = document.getElementById('sizeXInput');
     const sizeYInput = document.getElementById('sizeYInput');
-    if (x) 
-        sizeXInput.value = x;
-    if (y) 
-        sizeYInput.value = y;
 
-    const sizeX = sizeXInput.value;
-    const sizeY = sizeYInput.value;
+    const sizeX = (x != 0) ? x : Number(sizeXInput.value);
+    const sizeY = (y != 0) ? y : Number(sizeYInput.value);
 
-    fieldSize.X = getBetween(Number(sizeX), 1, fieldMaxSize);
-    fieldSize.Y = getBetween(Number(sizeY), 1, fieldMaxSize);
+    fieldSize.X = getBetween(sizeX, 10, fieldMaxSize);
+    fieldSize.Y = getBetween(sizeY, 10, fieldMaxSize);
     fieldOffset.X = getBetween(fieldOffset.X, 0, Math.max(0, fieldSize.X-Math.floor(size.x/2)));
     fieldOffset.Y = getBetween(fieldOffset.Y, 0, Math.max(0, fieldSize.Y-Math.floor(size.y/2)));
+
+    sizeXInput.value = fieldSize.X;
+    sizeYInput.value = fieldSize.Y;
 
     drawGrid();
     drawControls();
 }
 function setDrawCrosses(value) {
-    //console.log(value);
     drawCrosses = value;
 }
 function clearGrid() {
@@ -214,13 +212,13 @@ function parseExcel(e) {
         clearGrid();
         for (let R = range.s.r; R <= range.e.r; R++) {
             for (let C = range.s.c; C <= range.e.c; C++) {
-                //console.log(R, C);
                 let cell_ref = XLSX.utils.encode_cell({r: R, c: C}); // Create cell reference
                 let cell = worksheet[cell_ref];
                 //console.log(cell_ref, cell);
                 fieldData[C][R] = cell?.s?.bgColor?.rgb ? 1 : 0;
             }
         }
+        setFieldSize(x = range.e.c+1, y = range.e.r+1);
     };
     reader.readAsArrayBuffer(file);
 }
