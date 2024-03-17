@@ -67,5 +67,15 @@ const cursorStates = [
 ];
 
 const moveState = {
-    rect: null
+    cell: null
+}
+
+const selectState = {
+    cell: null,
+    selectedRect: {
+        pos: null,
+        size: null
+    },
+    copiedRect: null,
+    copiedData: null
 }

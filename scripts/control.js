@@ -107,6 +107,32 @@ function drawGrid() {
             }
         }
     }
+    if (cursorStates[cursorState].state == "select") {
+        function scaledRectData (rectData) {
+            const fixedRectData = fixRectData(rectData);
+            const rect = {
+                x: (fixedRectData.x-fieldOffset.X) * squareSize ,
+                y: (fixedRectData.y-fieldOffset.Y) * squareSize,
+                width:  fixedRectData.width * squareSize,
+                height: fixedRectData.height * squareSize
+            }
+            return rect;
+        }
+        if (selectState.cell != null) {
+            const selectedArea = new PIXI.Graphics();
+            selectedArea.lineStyle(3, 0xDE3249, 1);
+            const rect = scaledRectData(selectState.selectedRect);
+            selectedArea.drawRect(rect.x, rect.y, rect.width, rect.height);
+            app.stage.addChild(selectedArea);
+        }
+        if (selectState.copiedRect != null) {
+            const copiedArea = new PIXI.Graphics();
+            copiedArea.lineStyle(3, 0x3249DE, 1);
+            const rect = scaledRectData(selectState.copiedRect);
+            copiedArea.drawRect(rect.x, rect.y, rect.width, rect.height);
+            app.stage.addChild(copiedArea);
+        }
+    }
 }
 
 function onControlClick() {
@@ -153,12 +179,17 @@ function onAppMouseDown(event) {
         lastValue = changeRectColor(event);
     }
     if (cursorStates[cursorState].state == "move") {
-        moveState.rect = getRealRectPosition(event);
+        moveState.cell = getRealRectPosition(event);
+    }
+    if (cursorStates[cursorState].state == "select") {
+        selectState.cell = getRealRectPosition(event);
+        selectState.selectedRect.pos = selectState.cell;
+        selectState.selectedRect.size = {x:0, y:0}
     }
 }
 function onAppMouseUp(event) {
     if (cursorStates[cursorState].state == "move") {
-        moveState.rect = null;
+        moveState.cell = null;
     }
 }
 function onAppMouseMove(event) {
@@ -171,13 +202,67 @@ function onAppMouseMove(event) {
     }
     else if (cursorStates[cursorState].state == "move") {
         const pos = getRelativeRectPosition(event);
-        fieldOffset.X = moveState.rect.x-pos.x;
-        fieldOffset.Y = moveState.rect.y-pos.y;
+        fieldOffset.X = moveState.cell.x-pos.x;
+        fieldOffset.Y = moveState.cell.y-pos.y;
         fieldOffset.X = getBetween(fieldOffset.X, 0, Math.max(0, fieldSize.X-Math.floor(size.x/2)));
         fieldOffset.Y = getBetween(fieldOffset.Y, 0, Math.max(0, fieldSize.Y-Math.floor(size.y/2)));
     }
-    else if (cursorStates[cursorState].state == "select") {}
+    else if (cursorStates[cursorState].state == "select") {
+        const pos = getRealRectPosition(event);
+        selectState.selectedRect.size = {
+            x: pos.x - selectState.selectedRect.pos.x,
+            y: pos.y - selectState.selectedRect.pos.y
+        }
+    }
 }
+
+// Copy and Paste controller
+function copyPasteController(e) {
+    if (e.ctrlKey && (e.key === 'c' || e.key === 'C')) 
+        copySelected()
+    if (e.ctrlKey && (e.key === 'v' || e.key === 'V')) 
+        pasteCopied();
+    if (e.key === "Delete" ) 
+        deleteSelected();
+}
+
+function fixRectData(rectData) {
+    return {
+        x: rectData.size.x >=0 ? rectData.pos.x : rectData.pos.x+rectData.size.x,
+        y: rectData.size.y >=0 ? rectData.pos.y : rectData.pos.y+rectData.size.y,
+        width:  (1 + Math.abs(rectData.size.x)),
+        height: (1 + Math.abs(rectData.size.y))
+    }
+}
+function copySelected() {
+    selectState.copiedRect = structuredClone(selectState.selectedRect);
+    const fixedRectData = fixRectData(selectState.copiedRect);
+    selectState.copiedData = fieldData
+        .slice(fixedRectData.x, fixedRectData.x + fixedRectData.width)
+        .map(row => row.slice(fixedRectData.y, fixedRectData.y + fixedRectData.height));
+}
+function pasteCopied() {
+    const fixedRectData = fixRectData(selectState.selectedRect);
+    const copiedDataSize = {
+        width: selectState.copiedData.length,
+        height: selectState.copiedData[0].length
+    }
+    for (let x = 0; x < copiedDataSize.width; x++) {
+        for (let y = 0; y < copiedDataSize.height; y++) {
+            fieldData[fixedRectData.x+x][fixedRectData.y+y] = selectState.copiedData[x][y];
+        }
+    }
+}
+function deleteSelected() {
+    const fixedRectData = fixRectData(selectState.selectedRect);
+
+    for (let x = 0; x < fixedRectData.width; x++) {
+        for (let y = 0; y < fixedRectData.height; y++) {
+            fieldData[fixedRectData.x+x][fixedRectData.y+y] = 0;
+        }
+    }
+}
+
 
 function getBetween(num, min, max) {
     if (num < min)
@@ -271,7 +356,7 @@ function parseExcel(e) {
                 let cell_ref = XLSX.utils.encode_cell({r: R, c: C}); // Create cell reference
                 let cell = worksheet[cell_ref];
                 //console.log(cell_ref, cell);
-                fieldData[C][R] = cell?.s?.bgColor?.rgb ? 1 : 0;
+                fieldData[C][R] = cell?.s?.bgColor?.rgb != 0xFFFFFF ? 1 : 0;
             }
         }
         setFieldSize(x = range.e.c+1, y = range.e.r+1);

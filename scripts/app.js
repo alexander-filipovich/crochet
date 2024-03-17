@@ -54,6 +54,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const excelInput = document.getElementById('input-excel');
     excelInput.addEventListener('change', (e) => {parseExcel(e)});
+
+    document.addEventListener("keydown", (e) => {
+        if (cursorStates[cursorState].state == "select")
+            copyPasteController(e);
+    });
 });
 
 // Function to update a value in the array and redraw the grid
