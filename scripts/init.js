@@ -49,6 +49,15 @@ let fieldOffset = {
 };
 let fieldDataStored = localStorage.getItem('fieldData');
 let fieldData = fieldDataStored ? JSON.parse(fieldDataStored) : new Array(fieldMaxSize).fill(0).map(() => new Array(fieldMaxSize).fill(0));
+let gridData = {
+    size: { x:0, y:0 },
+    squares: new Array(),
+    isCrossesDrawn: false,
+    crosses: new Array(),
+    isSelectDrawn: false,
+    selectedArea: null,
+    copiedArea: null,
+}
 let lastValue = 0;
 
 let slider_x_pos;

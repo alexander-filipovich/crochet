@@ -65,53 +65,150 @@ function drawControls() {
     control_y.stage.addChild(slider_y);
 }
 
-function drawGrid() {
-    app.stage.removeChildren();
+function updateGridSize() {
+    for (let x = 0; x <= size.x; x++) {
+        if (gridData.squares.length <= x) { 
+            gridData.squares.push(new Array()); 
+            gridData.crosses.push(new Array());
+        }
+        for (let y = 0; y <= size.y; y++) {
+            if (gridData.squares[x].length <= y || gridData.squares.length <= x) {
+                gridData.squares[x].push({
+                    val: -1,
+                    sprite: new PIXI.Graphics()
+                })
+                app.stage.addChild(gridData.squares[x][y].sprite);
 
-    for (let x = 0; x < size.x+1; x++) {
-        for (let y = 0; y < size.y+1; y++) {
-            let square = new PIXI.Graphics();
+                gridData.crosses[x].push({
+                    val: -1,
+                    sprite: new PIXI.Sprite(crossTexture)
+                })
+                gridData.crosses[x][y].sprite.visible = false;
+                app.stage.addChild(gridData.crosses[x][y].sprite);
+            }
+        }
+    }
+
+    if (gridData.selectedArea == null) {
+        gridData.selectedArea = {
+            rect: { x: 0, y: 0, width: 0, height: 0 },
+            sprite: new PIXI.Graphics()
+        }
+        app.stage.addChild(gridData.selectedArea.sprite);
+    }
+    if (gridData.copiedArea == null) {
+        gridData.copiedArea = {
+            rect: { x: 0, y: 0, width: 0, height: 0 },
+            sprite: new PIXI.Graphics()
+        }
+        app.stage.addChild(gridData.copiedArea.sprite);
+    }
+    gridData.size = { ...size };
+}
+function clearSquares() {
+    for (let x = 0; x <= gridData.size.x; x++) {
+        for (let y = 0; y <= gridData.size.y; y++) {
+            gridData.squares[x][y].val = -1;
+            gridData.squares[x][y].sprite.clear();
+        }
+    }
+}
+function clearCrosses() {
+    for (let x = 0; x <= gridData.size.x; x++) {
+        for (let y = 0; y <= gridData.size.y; y++) {
+            gridData.crosses[x][y].val = -1
+            gridData.crosses[x][y].sprite.visible = false;
+        }
+    }
+}
+function clearSelectedArea() {
+    gridData.copiedArea.rect = null;
+    gridData.copiedArea.sprite.clear();
+    gridData.selectedArea.rect = null;
+    gridData.selectedArea.sprite.clear();
+    gridData.isSelectDrawn = false;
+}
+function drawGrid() {
+    //app.stage.removeChildren();
+    if (gridData.size.x != size.x || gridData.size.y != size.y) {
+        console.log("test");
+        clearSquares();
+        clearCrosses();
+        updateGridSize();
+    }
+    for (let x = 0; x <= size.x; x++) {
+        for (let y = 0; y <= size.y; y++) {
+            const square = gridData.squares[x][y];
             let color;
             if (x+fieldOffset.X >= fieldSize.X || y+fieldOffset.Y >= fieldSize.Y) {
-                color = backgroundColor;
+                square.sprite.clear();
+                square.val = -1;
+                continue;
             }
-            else if (fieldData[x+fieldOffset.X][y+fieldOffset.Y] == 1) {
+            
+            if (square.val == fieldData[x+fieldOffset.X][y+fieldOffset.Y]) {
+                continue;
+            }
+            else {
+                square.val = fieldData[x+fieldOffset.X][y+fieldOffset.Y];
+            }
+
+            if (fieldData[x+fieldOffset.X][y+fieldOffset.Y] == 1) {
                 color = 0xFFFF00;
             }
             else {
                 color = (y%2 == 0) ? 0xFFFFFF : 0xF0F0F0;
             }
-            square.beginFill(color);
-            square.drawRect(x * squareSize+1, y * squareSize+1, squareSize-2, squareSize-2);
-            square.endFill();
-            app.stage.addChild(square);
+            square.sprite.clear();
+            square.sprite.beginFill(color);
+            square.sprite.drawRect(x * squareSize+1, y * squareSize+1, squareSize-2, squareSize-2);
+            square.sprite.endFill();
         }
     }
 
     if (drawCrosses) {
         for (let x = 0; x < size.x+1; x++) {
             for (let y = 0; y < size.y+1; y++) {
+                const cross = gridData.crosses[x][y];
                 if (x+fieldOffset.X >= fieldSize.X || y+fieldOffset.Y+2 >= fieldSize.Y) {
+                    cross.sprite.visible = false;
+                    cross.val = -1;
                     continue;
                 }
-                if (fieldData[x+fieldOffset.X][y+fieldOffset.Y] % 2 == (y+fieldOffset.Y) % 2&& 
+                const val = (fieldData[x+fieldOffset.X][y+fieldOffset.Y] % 2 == (y+fieldOffset.Y) % 2 && 
                     fieldData[x+fieldOffset.X][y+fieldOffset.Y] == fieldData[x+fieldOffset.X][y+fieldOffset.Y+1] && 
-                    fieldData[x+fieldOffset.X][y+fieldOffset.Y] == fieldData[x+fieldOffset.X][y+fieldOffset.Y+2]) {
-                    const cross = new PIXI.Sprite(crossTexture);
-                    cross.x = x * squareSize+2;
-                    cross.y = y * squareSize+2;
-                    cross.width = squareSize-4;
-                    cross.height = squareSize-4;
-                    app.stage.addChild(cross);
+                    fieldData[x+fieldOffset.X][y+fieldOffset.Y] == fieldData[x+fieldOffset.X][y+fieldOffset.Y+2]) ?
+                    1 : 0;
+                if (cross.val == val) {
+                    continue;
+                }
+                else {
+                    cross.val = val;
+                }
+
+                if (val == 1) {
+                    cross.sprite.x = x * squareSize+2;
+                    cross.sprite.y = y * squareSize+2;
+                    cross.sprite.width = squareSize-4;
+                    cross.sprite.height = squareSize-4;
+                    cross.sprite.visible = true;
+                }
+                else {
+                    cross.sprite.visible = false;
                 }
             }
         }
+        gridData.isCrossesDrawn = true;
     }
+    else if (gridData.isCrossesDrawn) {
+        clearCrosses();
+    }
+
     if (cursorStates[cursorState].state == "select") {
         function scaledRectData (rectData) {
             const fixedRectData = fixRectData(rectData);
             const rect = {
-                x: (fixedRectData.x-fieldOffset.X) * squareSize ,
+                x: (fixedRectData.x-fieldOffset.X) * squareSize,
                 y: (fixedRectData.y-fieldOffset.Y) * squareSize,
                 width:  fixedRectData.width * squareSize,
                 height: fixedRectData.height * squareSize
@@ -119,19 +216,31 @@ function drawGrid() {
             return rect;
         }
         if (selectState.cell != null) {
-            const selectedArea = new PIXI.Graphics();
-            selectedArea.lineStyle(3, 0xDE3249, 1);
+            const selectedArea = gridData.selectedArea;
             const rect = scaledRectData(selectState.selectedRect);
-            selectedArea.drawRect(rect.x, rect.y, rect.width, rect.height);
-            app.stage.addChild(selectedArea);
+            if (selectedArea.rect.x != rect.x || selectedArea.rect.y != rect.y || 
+                selectedArea.rect.width != rect.width || selectedArea.rect.height != rect.height) {
+                selectedArea.sprite.clear();
+                selectedArea.sprite.lineStyle(3, 0xDE3249, 1);
+                selectedArea.sprite.drawRect(rect.x, rect.y, rect.width, rect.height);
+                selectedArea.rect = { ...rect }
+            }
         }
         if (selectState.copiedRect != null) {
-            const copiedArea = new PIXI.Graphics();
-            copiedArea.lineStyle(3, 0x3249DE, 1);
+            const copiedArea = gridData.copiedArea;
             const rect = scaledRectData(selectState.copiedRect);
-            copiedArea.drawRect(rect.x, rect.y, rect.width, rect.height);
-            app.stage.addChild(copiedArea);
+            if (copiedArea.rect.x != rect.x || copiedArea.rect.y != rect.y || 
+                copiedArea.rect.width != rect.width || copiedArea.rect.height != rect.height) {
+                copiedArea.sprite.clear();
+                copiedArea.sprite.lineStyle(3, 0x3249DE, 1);
+                copiedArea.sprite.drawRect(rect.x, rect.y, rect.width, rect.height);
+                copiedArea.rect = { ...rect }
+            }
         }
+        gridData.isSelectDrawn = true;
+    }
+    else if (gridData.isSelectDrawn == true) {
+        clearSelectedArea();
     }
 }
 

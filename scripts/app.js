@@ -3,6 +3,7 @@ function init() {
     resizeCanvas();
 
     // Initially draw the grid
+    updateGridSize();
     drawGrid();
     drawControls();
 }
@@ -70,4 +71,4 @@ setInterval(() => {
 setInterval(() => {
     localStorage.setItem('fieldData', JSON.stringify(fieldData));
     localStorage.setItem('fieldSize', JSON.stringify(fieldSize));
-}, 1000);
+}, 10000);
