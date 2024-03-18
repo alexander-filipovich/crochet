@@ -65,6 +65,8 @@ function drawControls() {
     control_y.stage.addChild(slider_y);
 }
 
+
+// Grid visual
 function updateGridSize() {
     for (let x = 0; x <= size.x; x++) {
         if (gridData.squares.length <= x) { 
@@ -122,16 +124,14 @@ function clearCrosses() {
     }
 }
 function clearSelectedArea() {
-    gridData.copiedArea.rect = null;
+    gridData.copiedArea.rect = { x: 0, y: 0, width: 0, height: 0 };
     gridData.copiedArea.sprite.clear();
-    gridData.selectedArea.rect = null;
+    gridData.selectedArea.rect = { x: 0, y: 0, width: 0, height: 0 };
     gridData.selectedArea.sprite.clear();
     gridData.isSelectDrawn = false;
 }
 function drawGrid() {
-    //app.stage.removeChildren();
     if (gridData.size.x != size.x || gridData.size.y != size.y) {
-        console.log("test");
         clearSquares();
         clearCrosses();
         updateGridSize();
