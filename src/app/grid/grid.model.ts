@@ -1,19 +1,57 @@
 
-import { Assets, Graphics, Sprite, Texture } from 'pixi.js';
+import { Application, Assets, Graphics, Sprite, Texture } from 'pixi.js';
+
+interface Point {
+    x: number;
+    y: number;
+}
+
+enum SquareState {
+    empty,
+    filled 
+}
 
 export class Square {
+    static readonly colors = {
+        filled: 0xFFFF00,
+        empty: 0xF0F0F0,
+        stroke: 0xA0A0A0
+    };
     sprite: Graphics;
+    size: number;
+    position: Point;
+    state: SquareState;
     cleared: boolean = true;
 
-    constructor() {
+    constructor(x?: number, y?: number) {
         this.sprite = new Graphics();
+        this.size = 0;
+        this.position = { x: 0, y: 0 };
+        this.state = SquareState.empty;
         this.sprite.visible = false;
     }
-    draw(color: number | string, x: number, y: number, size: number) {
+    setSize(size: number) {
+        this.size = size;
+    }
+    setPosition(x: number, y: number) {
+        this.position = { x: x, y: y };
+    }
+    draw() {
+        let color;
+        if (this.state == SquareState.filled) 
+            color = Square.colors.filled;
+        else 
+            color = Square.colors.empty;
+
         this.sprite.clear();
-        this.sprite.rect(x * size+1, y * size+1, size-2, size-2);
+        // Stroke
+        this.sprite.rect(this.position.x * this.size, this.position.y * this.size, this.size, this.size);
+        this.sprite.fill(Square.colors.stroke);
+        // Fill
+        this.sprite.rect(this.position.x * this.size+1, this.position.y * this.size+1, this.size-2, this.size-2);
         this.sprite.fill(color);
-        this.sprite.stroke({ width: 2, color: 0xfeeb77 });
+        // Default stroke doesn't work the way I want it to. Need to investigate later.
+        //this.sprite.stroke({ width: 1, color: Square.colors.stroke });
         this.sprite.visible = true;
         this.cleared = false;
     }
@@ -25,7 +63,6 @@ export class Square {
 }
 
 
-//const texture = await Assets.load('assets/images/cross.png');
 export class Cross {
     static texture: Texture;
     sprite: Sprite;
@@ -43,42 +80,62 @@ export class Cross {
     }
 }
 
-export class fieldData {
-    fieldMaxSize = {
-        X: 1000,
-        Y: 1000
-    }
-    size = { x:0, y:0 };
-    squares: Array<Array<Square>>;
+
+interface GridSize {
+    X: number;
+    Y: number;
+}
+export class Field {
+    app: Application;
+
+    fieldSize: GridSize = { X: 20, Y: 10 };
+
+    squareSize: number = 40;
+    gridSize: GridSize = { X: 0, Y: 0 };
+    offset: Point = { x: 0, y: 0 };
+
     fieldData: Array<Array<number>>;
+    squares: Array<Array<Square>>;
     
-    constructor() {
-        const fieldDataStored = localStorage.getItem('fieldData');
+    constructor(app: Application) {
+        this.app = app;
+
+        const fieldDataStored = null; // localStorage.getItem('fieldData');
         this.fieldData = fieldDataStored ? 
             JSON.parse(fieldDataStored) : 
-            Array.from({ length: this.fieldMaxSize.Y }, () => Array.from({ length: this.fieldMaxSize.Y }, () => 0));
-        this.squares = Array.from({ length: this.fieldMaxSize.Y }, () => Array.from({ length: this.fieldMaxSize.Y }, () => new Square()));
+            Array.from({ length: this.fieldSize.X }, () => Array.from({ length: this.fieldSize.Y }, () => 0));
+        this.squares = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Square()));
     }
 
-    updateGridSize() {
-        for (let x = 0; x <= this.size.x; x++) {
-            if (this.squares.length <= x) { 
-                this.squares.push(new Array()); 
-            }
-            for (let y = 0; y <= this.size.y; y++) {
-                if (this.squares[x].length <= y || this.squares.length <= x) {
-                    this.squares[x].push(new Square());
-                    //app.stage.addChild(gridData.squares[x][y].sprite);
+    updateSize(canvasWidth: number, canvasHeight: number) {
+        const newSize: GridSize = {
+            X: Math.floor(canvasWidth/this.squareSize), 
+            Y: Math.floor(canvasHeight/this.squareSize)
+        };
+        if (this.gridSize.X == newSize.X && this.gridSize.Y == newSize.Y)
+            return
+        
+        for (let x = 0; x < Math.max(this.gridSize.X, newSize.X); x++) {
+            if (this.squares.length <= x) 
+                this.squares.push(Array.from({ length: 0 }, () => new Square()));
+            for (let y = 0; y < Math.max(this.gridSize.Y, newSize.Y); y++) {
+                if (this.squares[x].length <= y) {
+                    const sq = new Square();
+                    sq.setPosition(x, y);
+                    sq.setSize(this.squareSize);
+                    sq.draw();
+                    this.squares[x].push(sq);
+                    this.app.stage.addChild(sq.sprite);
+                    console.log('test {x} {y}');
+                }
+                if (x >= newSize.X || y >= newSize.Y || x >= this.fieldSize.X || y >= this.fieldSize.Y) {
+                    this.squares[x][y].clear();
+                }
+                else {
+                    this.squares[x][y].draw();
                 }
             }
         }
-    }
-
-    clearSquares() {
-        for (let x = 0; x <= this.size.x; x++) {
-            for (let y = 0; y <= this.size.y; y++) {
-                this.squares[x][y].clear();
-            }
-        }
+        this.gridSize = newSize;
     }
 }
