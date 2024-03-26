@@ -178,6 +178,10 @@ export class Field {
             }
         }
     }
+    clear() {
+        this.fieldData = Array.from({ length: this.fieldSize.X }, () => Array.from({ length: this.fieldSize.Y }, () => SquareState.empty));
+        this.updateGrid();
+    }
     updateSquare(position: Point, state?: SquareState) {
         if (this.getSquareState(position) == undefined)
             return

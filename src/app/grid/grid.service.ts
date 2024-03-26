@@ -45,7 +45,7 @@ export class GridService {
   }
   handleGridKeyboard(event: KeyboardEvent) {
     if (event.ctrlKey && event.shiftKey && event.key === 'Escape') {
-      console.log("Field cleared");
+      this.field.clear();
     }
   }
 
