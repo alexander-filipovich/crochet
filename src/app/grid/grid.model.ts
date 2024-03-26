@@ -6,16 +6,16 @@ interface Point {
     y: number;
 }
 
-enum SquareState {
+export enum SquareState {
     empty,
-    filled 
+    filled,
+    __LENGTH
 }
 
 export class Square {
     static readonly colors = {
-        filled: 0xFFFF00,
         empty: 0xF0F0F0,
-        stroke: 0xA0A0A0
+        filled: 0xFFFF00,
     };
     sprite: Graphics;
     size: number;
@@ -43,15 +43,11 @@ export class Square {
         else 
             color = Square.colors.empty;
 
-        this.sprite.clear();
-        // Stroke
-        this.sprite.rect(this.position.x * this.size, this.position.y * this.size, this.size, this.size);
-        this.sprite.fill(Square.colors.stroke);
-        // Fill
+        if (!this.cleared)
+            this.sprite.clear();
+
         this.sprite.rect(this.position.x * this.size+1, this.position.y * this.size+1, this.size-2, this.size-2);
         this.sprite.fill(color);
-        // Default stroke doesn't work the way I want it to. Need to investigate later.
-        //this.sprite.stroke({ width: 1, color: Square.colors.stroke });
         this.sprite.visible = true;
         this.cleared = false;
     }
@@ -103,14 +99,21 @@ export class Field {
         const fieldDataStored = null; // localStorage.getItem('fieldData');
         this.fieldData = fieldDataStored ? 
             JSON.parse(fieldDataStored) : 
-            Array.from({ length: this.fieldSize.X }, () => Array.from({ length: this.fieldSize.Y }, () => 0));
+            Array.from({ length: this.fieldSize.X }, () => Array.from({ length: this.fieldSize.Y }, () => SquareState.empty));
         this.squares = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Square()));
+    }
+
+    getScaledPosition(position: Point) {
+        return {
+            x: Math.floor(position.x/this.squareSize), 
+            y: Math.floor(position.y/this.squareSize)
+        };
     }
 
     updateSize(canvasWidth: number, canvasHeight: number) {
         const newSize: GridSize = {
-            X: Math.floor(canvasWidth/this.squareSize), 
-            Y: Math.floor(canvasHeight/this.squareSize)
+            X: Math.floor(canvasWidth/this.squareSize)+1, 
+            Y: Math.floor(canvasHeight/this.squareSize)+1
         };
         if (this.gridSize.X == newSize.X && this.gridSize.Y == newSize.Y)
             return
@@ -126,9 +129,8 @@ export class Field {
                     sq.draw();
                     this.squares[x].push(sq);
                     this.app.stage.addChild(sq.sprite);
-                    console.log('test {x} {y}');
                 }
-                if (x >= newSize.X || y >= newSize.Y || x >= this.fieldSize.X || y >= this.fieldSize.Y) {
+                if ((x > newSize.X || y > newSize.Y) || (x+this.offset.x >= this.fieldSize.X || y+this.offset.y >= this.fieldSize.Y)) {
                     this.squares[x][y].clear();
                 }
                 else {
@@ -137,5 +139,13 @@ export class Field {
             }
         }
         this.gridSize = newSize;
+    }
+    updateSquare(position: Point, state?: SquareState) {
+        const p: Point = this.getScaledPosition(position);        
+        const newState = typeof state != 'undefined' ? state : (this.fieldData[p.x][p.y] + 1) % SquareState.__LENGTH;
+        this.fieldData[p.x][p.y] = newState;
+        this.squares[p.x][p.y].state = newState;
+        this.squares[p.x][p.y].draw();
+        return newState;
     }
 }
