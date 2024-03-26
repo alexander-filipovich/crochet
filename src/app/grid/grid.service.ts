@@ -1,6 +1,6 @@
 import { HostListener, Injectable } from '@angular/core';
 import { Application } from 'pixi.js';
-import { Field, SquareState } from './grid.model';
+import { Field, Point, SquareState } from './grid.model';
 
 @Injectable({
   providedIn: 'root'
@@ -8,12 +8,12 @@ import { Field, SquareState } from './grid.model';
 export class GridService {
   app: Application;
   field: Field;
-  lastState: SquareState;
+  lastClickedSquare: any;
   
   constructor() {
     this.app = new Application; 
     this.field = new Field(this.app);
-    this.lastState = SquareState.empty;
+    this.lastClickedSquare;
   }
   
   @HostListener('window:resize', ['$event'])
@@ -23,18 +23,37 @@ export class GridService {
   }
   handleGridClick(event: MouseEvent) {
     //console.log('Canvas clicked!', event);
+    const pos = {x: event.offsetX, y: event.offsetY};
+    this.lastClickedSquare = this.field.getSquareData(pos);   
+    
+    if (this.lastClickedSquare.state == undefined)
+      return
+    
     if (event.buttons === 1) {
-      this.lastState = this.field.updateSquare({x: event.offsetX, y: event.offsetY});
+      this.field.squareClick(pos);
     }
+    this.lastClickedSquare = this.field.getSquareData(pos);
   }
   handleGridMousemove(event: MouseEvent) {
+    const pos = {x: event.offsetX, y: event.offsetY};
     if (event.buttons === 1) {
-      this.field.updateSquare({x: event.offsetX, y: event.offsetY}, this.lastState);
+      this.field.squareClick(pos, this.lastClickedSquare.state ?? SquareState.filled);
+    }
+    if (event.buttons === 4) {
+      this.field.moveToPoint(pos, this.lastClickedSquare.position);
     }
   }
+  handleGridKeyboard(event: KeyboardEvent) {
+    if (event.ctrlKey && event.shiftKey && event.key === 'Escape') {
+      console.log("Field cleared");
+    }
+  }
+
+
   setListeners() {
     this.app.canvas.addEventListener('contextmenu', e => e.preventDefault());
     this.app.canvas.addEventListener('mousedown', this.handleGridClick.bind(this));
     this.app.canvas.addEventListener('mousemove', this.handleGridMousemove.bind(this));
+    window.addEventListener('keydown', this.handleGridKeyboard.bind(this));
   }
 }

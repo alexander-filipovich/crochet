@@ -1,11 +1,10 @@
 
 import { Application, Assets, Graphics, Sprite, Texture } from 'pixi.js';
 
-interface Point {
+export interface Point {
     x: number;
     y: number;
 }
-
 export enum SquareState {
     empty,
     filled,
@@ -36,6 +35,12 @@ export class Square {
     setPosition(x: number, y: number) {
         this.position = { x: x, y: y };
     }
+    setState(state: SquareState) {
+        if (this.state != state || this.cleared) {
+            this.state = state;
+            this.draw()
+        }
+    }
     draw() {
         let color;
         if (this.state == SquareState.filled) 
@@ -52,6 +57,8 @@ export class Square {
         this.cleared = false;
     }
     clear() {
+        if (this.cleared)
+            return
         this.sprite.clear();
         this.sprite.visible = false;
         this.cleared = true;
@@ -103,10 +110,27 @@ export class Field {
         this.squares = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Square()));
     }
 
-    getScaledPosition(position: Point) {
+    getScaledGridPosition(canvasPosition: Point) {
         return {
-            x: Math.floor(position.x/this.squareSize), 
-            y: Math.floor(position.y/this.squareSize)
+            x: Math.floor(canvasPosition.x/this.squareSize), 
+            y: Math.floor(canvasPosition.y/this.squareSize)
+        };
+    }
+    getScaledFieldPosition(canvasPosition: Point) {
+        const position: Point = this.getScaledGridPosition(canvasPosition);
+        return {
+            x: position.x+this.offset.x, 
+            y: position.y+this.offset.y
+        };
+    }
+    getSquareState(position: Point) {
+        return this.fieldData[position.x]?.[position.y] ?? null
+    }
+    getSquareData(canvasPosition: Point) {
+        const position: Point = this.getScaledFieldPosition(canvasPosition);
+        return {
+            position: position,
+            state: this.getSquareState(position)
         };
     }
 
@@ -126,26 +150,52 @@ export class Field {
                     const sq = new Square();
                     sq.setPosition(x, y);
                     sq.setSize(this.squareSize);
-                    sq.draw();
                     this.squares[x].push(sq);
                     this.app.stage.addChild(sq.sprite);
                 }
-                if ((x > newSize.X || y > newSize.Y) || (x+this.offset.x >= this.fieldSize.X || y+this.offset.y >= this.fieldSize.Y)) {
+                if (x > newSize.X || y > newSize.Y){
                     this.squares[x][y].clear();
-                }
-                else {
-                    this.squares[x][y].draw();
                 }
             }
         }
         this.gridSize = newSize;
+        this.updateGrid();
+    }
+    updateGrid() {
+        for (let x = 0; x < this.gridSize.X; x++) {
+            for (let y = 0; y < this.gridSize.Y; y++) {
+                const pos = {
+                    x: x+this.offset.x,
+                    y: y+this.offset.y
+                }     
+                const state = this.getSquareState(pos);      
+                if (state == undefined) {
+                    this.squares[x][y].clear();
+                }
+                else {
+                    this.squares[x][y].setState(state);
+                }
+            }
+        }
     }
     updateSquare(position: Point, state?: SquareState) {
-        const p: Point = this.getScaledPosition(position);        
-        const newState = typeof state != 'undefined' ? state : (this.fieldData[p.x][p.y] + 1) % SquareState.__LENGTH;
-        this.fieldData[p.x][p.y] = newState;
-        this.squares[p.x][p.y].state = newState;
-        this.squares[p.x][p.y].draw();
-        return newState;
+        if (this.getSquareState(position) == undefined)
+            return
+        const newState = (state != undefined) ? state : (this.fieldData[position.x][position.y] + 1) % SquareState.__LENGTH;
+        this.fieldData[position.x][position.y] = newState;
+        const sq = this.squares[position.x-this.offset.x][position.y-this.offset.y]
+        sq.setState(newState);
+    }
+    squareClick(canvasPosition: Point, state?: SquareState) {
+        this.updateSquare(this.getScaledFieldPosition(canvasPosition), state);
+    }
+
+    moveToPoint(canvasPosition: Point, squarePosition: Point) {
+        const position: Point = this.getScaledGridPosition(canvasPosition);        
+        this.offset = { 
+            x: squarePosition.x-position.x, 
+            y: squarePosition.y-position.y 
+        };
+        this.updateGrid();
     }
 }
