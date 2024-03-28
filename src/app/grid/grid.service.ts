@@ -1,6 +1,7 @@
 import { HostListener, Injectable } from '@angular/core';
 import { Application } from 'pixi.js';
-import { Field, Point, SquareState } from './grid.model';
+import { Field, Point, ScrollBar, SquareState } from './grid.model';
+import { NONE_TYPE } from '@angular/compiler';
 
 @Injectable({
   providedIn: 'root'
@@ -9,13 +10,21 @@ export class GridService {
   app: Application;
   field: Field;
   lastClickedSquare: any;
+  sb: ScrollBar;
   
   constructor() {
     this.app = new Application; 
     this.field = new Field(this.app);
     this.lastClickedSquare;
+
+    this.sb = new ScrollBar();
+    this.app.stage.addChild(this.sb.sprite);
   }
-  
+  async init() {
+    await ScrollBar.loadTexture(); 
+    this.sb.init()
+  }
+
   @HostListener('window:resize', ['$event'])
   resizeCanvas() {
     const canvas = this.app.canvas;
@@ -36,10 +45,13 @@ export class GridService {
   }
   handleGridMousemove(event: MouseEvent) {
     const pos = {x: event.offsetX, y: event.offsetY};
-    if (event.buttons === 1) {
+    if (ScrollBar.dragTarget && event.buttons === 1) {
+      ScrollBar.dragTarget.moveTo(pos.x, undefined);
+    }
+    else if (event.buttons === 1) {
       this.field.squareClick(pos, this.lastClickedSquare.state ?? SquareState.filled);
     }
-    if (event.buttons === 4) {
+    else if (event.buttons === 4) {
       this.field.moveToPoint(pos, this.lastClickedSquare.position);
     }
   }

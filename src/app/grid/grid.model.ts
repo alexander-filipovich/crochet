@@ -27,6 +27,7 @@ export class Square {
         this.size = 0;
         this.position = { x: 0, y: 0 };
         this.state = SquareState.empty;
+        this.sprite.zIndex = 1;
         this.sprite.visible = false;
     }
     setSize(size: number) {
@@ -83,6 +84,44 @@ export class Cross {
     }
 }
 
+export class ScrollBar {
+    static dragTarget?: ScrollBar;
+    static texture: Texture;
+    sprite: Sprite;
+    size: Point = { x: 20, y: 20};
+    position: Point = { x: 10, y: 10 };
+    //type: 'h' | 'v';
+
+    constructor() {
+        this.sprite = new Sprite();
+        this.sprite.eventMode = 'static';
+        this.sprite.zIndex = 2;
+    }
+    static async loadTexture(texture = 'assets/images/scrollbar.png') {
+        ScrollBar.texture = await Assets.load(texture);
+    }
+    init() {
+        this.sprite.texture = ScrollBar.texture;
+        this.sprite.setSize(this.size.x, this.size.y)
+        this.moveTo(20, 10);
+        this.sprite.anchor.set(0.5);
+        this.sprite.on('pointerdown', this.onDragStart.bind(this));
+        this.sprite.on('pointerup', this.onDragEnd.bind(this));
+    }
+    onDragStart() {
+        ScrollBar.dragTarget = this;
+    }
+    onDragEnd() {
+        ScrollBar.dragTarget = undefined;
+    }
+    moveTo(x?: number, y?: number) {
+        if (x)
+            this.sprite.x = x;
+        if (y)
+            this.sprite.y = y;
+    }
+}
+
 
 interface GridSize {
     X: number;
@@ -95,7 +134,7 @@ export class Field {
 
     squareSize: number = 40;
     gridSize: GridSize = { X: 0, Y: 0 };
-    offset: Point = { x: 0, y: 0 };
+    offset: Point = { x: -1, y: -1 };
 
     fieldData: Array<Array<number>>;
     squares: Array<Array<Square>>;
