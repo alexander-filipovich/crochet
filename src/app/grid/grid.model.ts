@@ -1,6 +1,13 @@
 
 import { Application, Assets, Graphics, Sprite, Texture } from 'pixi.js';
 
+export enum zIndexes {
+    background,
+    square, 
+    cross,
+    scrollbar
+}
+
 export interface Point {
     x: number;
     y: number;
@@ -12,23 +19,26 @@ export enum SquareState {
 }
 
 export class Square {
-    static readonly colors = {
-        empty: 0xF0F0F0,
-        filled: 0xFFFF00,
+    static textures = {
+        empty: new Texture(),
+        filled: new Texture(),
     };
-    sprite: Graphics;
-    size: number;
-    position: Point;
-    state: SquareState;
+    sprite: Sprite;
+    size: number = 0;
+    position: Point = { x: 0, y: 0 };
+    state: SquareState = SquareState.empty;
     cleared: boolean = true;
 
     constructor(x?: number, y?: number) {
-        this.sprite = new Graphics();
-        this.size = 0;
-        this.position = { x: 0, y: 0 };
-        this.state = SquareState.empty;
-        this.sprite.zIndex = 1;
+        this.sprite = new Sprite();
+        this.sprite.anchor.set(0.5)
+        this.sprite.zIndex = zIndexes.square;
         this.sprite.visible = false;
+    }
+    static async loadTextures() {
+        Square.textures.filled = await Assets.load('assets/images/square/square-filled.png');
+        Square.textures.empty = await Assets.load('assets/images/square/square-empty.png');
+        console.log("Square textures loaded");
     }
     setSize(size: number) {
         this.size = size;
@@ -43,24 +53,18 @@ export class Square {
         }
     }
     draw() {
-        let color;
         if (this.state == SquareState.filled) 
-            color = Square.colors.filled;
+            this.sprite.texture = Square.textures.filled;
         else 
-            color = Square.colors.empty;
-
-        if (!this.cleared)
-            this.sprite.clear();
-
-        this.sprite.rect(this.position.x * this.size+1, this.position.y * this.size+1, this.size-2, this.size-2);
-        this.sprite.fill(color);
+            this.sprite.texture = Square.textures.empty;
+        this.sprite.setSize(this.size-2, this.size-2); // change later with texture
+        this.sprite.position.set(this.position.x*this.size+this.size/2, this.position.y*this.size+this.size/2);
         this.sprite.visible = true;
         this.cleared = false;
     }
     clear() {
         if (this.cleared)
             return
-        this.sprite.clear();
         this.sprite.visible = false;
         this.cleared = true;
     }
@@ -88,22 +92,23 @@ export class ScrollBar {
     static dragTarget?: ScrollBar;
     static texture: Texture;
     sprite: Sprite;
-    size: Point = { x: 20, y: 20};
-    position: Point = { x: 10, y: 10 };
+    size: Point = { x: 40, y: 40};
+    position: Point = { x: 20, y: 20 };
     //type: 'h' | 'v';
 
     constructor() {
         this.sprite = new Sprite();
         this.sprite.eventMode = 'static';
-        this.sprite.zIndex = 2;
+        this.sprite.zIndex = zIndexes.scrollbar;
     }
     static async loadTexture(texture = 'assets/images/scrollbar.png') {
         ScrollBar.texture = await Assets.load(texture);
     }
     init() {
         this.sprite.texture = ScrollBar.texture;
+        //this.sprite.texture = Square.textures.filled;
         this.sprite.setSize(this.size.x, this.size.y)
-        this.moveTo(20, 10);
+        this.moveTo(20, 20);
         this.sprite.anchor.set(0.5);
         this.sprite.on('pointerdown', this.onDragStart.bind(this));
         this.sprite.on('pointerup', this.onDragEnd.bind(this));

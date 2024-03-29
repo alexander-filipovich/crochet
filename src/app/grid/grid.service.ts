@@ -1,6 +1,6 @@
 import { HostListener, Injectable } from '@angular/core';
 import { Application } from 'pixi.js';
-import { Field, Point, ScrollBar, SquareState } from './grid.model';
+import { Field, Point, ScrollBar, Square, SquareState } from './grid.model';
 import { NONE_TYPE } from '@angular/compiler';
 
 @Injectable({
@@ -21,11 +21,11 @@ export class GridService {
     this.app.stage.addChild(this.sb.sprite);
   }
   async init() {
+    await Square.loadTextures();
     await ScrollBar.loadTexture(); 
     this.sb.init()
   }
 
-  @HostListener('window:resize', ['$event'])
   resizeCanvas() {
     const canvas = this.app.canvas;
     this.field.updateSize(canvas.width, canvas.height)
@@ -35,6 +35,8 @@ export class GridService {
     const pos = {x: event.offsetX, y: event.offsetY};
     this.lastClickedSquare = this.field.getSquareData(pos);   
     
+    if (ScrollBar.dragTarget)
+      return
     if (this.lastClickedSquare.state == undefined)
       return
     
@@ -67,5 +69,6 @@ export class GridService {
     this.app.canvas.addEventListener('mousedown', this.handleGridClick.bind(this));
     this.app.canvas.addEventListener('mousemove', this.handleGridMousemove.bind(this));
     window.addEventListener('keydown', this.handleGridKeyboard.bind(this));
+    window.addEventListener('resize', this.resizeCanvas.bind(this));
   }
 }
