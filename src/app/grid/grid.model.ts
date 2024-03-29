@@ -112,6 +112,7 @@ export class ScrollBar {
         this.sprite.anchor.set(0.5);
         this.sprite.on('pointerdown', this.onDragStart.bind(this));
         this.sprite.on('pointerup', this.onDragEnd.bind(this));
+        this.sprite.on('pointerupoutside', this.onDragEnd.bind(this));
     }
     onDragStart() {
         ScrollBar.dragTarget = this;
