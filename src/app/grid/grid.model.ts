@@ -18,12 +18,8 @@ export enum SquareState {
     __LENGTH
 }
 
-function getBetween(val: number, min: number, max: number, withZero: boolean = false) {
-    max = Math.max(min, max); // Max cannot be less then min
-    if (withZero) {
-        max = Math.max(0, max);
-        min = Math.min(0, min);
-    }
+function getBetween(val: number, min: number, max: number) {
+    max = Math.max(min, max);
     if (val < min)
         return min;
     if (val > max)
@@ -278,12 +274,12 @@ export class Field {
     fixOffset() {
         const offsetBorders = {
             left: -Math.floor(config.gridMaxOffsetPx.left/this.squareSize),
-            right: this.fieldSize.X-(this.gridSize.X)+Math.floor(config.gridMaxOffsetPx.right/this.squareSize)+1,
+            right: this.fieldSize.X-Math.floor(config.gridMaxOffsetPx.left/this.squareSize),
             top: -Math.floor(config.gridMaxOffsetPx.top/this.squareSize),
-            bottom: this.fieldSize.Y-(this.gridSize.Y)+Math.floor(config.gridMaxOffsetPx.bottom/this.squareSize)+1,
+            bottom: this.fieldSize.Y-Math.floor(config.gridMaxOffsetPx.top/this.squareSize),
         }
-        this.offset.x = getBetween(this.offset.x, offsetBorders.left, offsetBorders.right, true);
-        this.offset.y = getBetween(this.offset.y, offsetBorders.top, offsetBorders.bottom, true);
+        this.offset.x = getBetween(this.offset.x, offsetBorders.left, offsetBorders.right);
+        this.offset.y = getBetween(this.offset.y, offsetBorders.top, offsetBorders.bottom);
         Object.entries(this.scrollbars).forEach(([key, scrollbar]) => {
             scrollbar.moveTo({
                 x: ((this.offset.x - offsetBorders.left)/Math.max(1, offsetBorders.right - offsetBorders.left))*this.canvasSize.X, 
