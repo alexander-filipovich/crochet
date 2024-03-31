@@ -168,7 +168,7 @@ export class Field {
     constructor(app: Application) {
         this.app = app;
 
-        const fieldDataStored = null; // localStorage.getItem('fieldData');
+        const fieldDataStored = localStorage.getItem('fieldData');
         this.fieldData = fieldDataStored ? 
             JSON.parse(fieldDataStored) : 
             Array.from({ length: this.fieldSize.X }, () => Array.from({ length: this.fieldSize.Y }, () => SquareState.empty));

@@ -67,8 +67,12 @@ export class GridService {
     this.app.canvas.addEventListener('contextmenu', e => e.preventDefault());
     this.app.canvas.addEventListener('mousedown', this.handleGridClick.bind(this));
     this.app.canvas.addEventListener('mousemove', this.handleGridMousemove.bind(this));
-    this.app.canvas.addEventListener('wheel', this.handleGridWheel.bind(this)); 
+    this.app.canvas.addEventListener('wheel', this.handleGridWheel.bind(this), {'passive': true}); 
     window.addEventListener('keydown', this.handleGridKeyboard.bind(this));
     window.addEventListener('resize', this.resizeCanvas.bind(this));
+
+    setInterval(() => {
+      localStorage.setItem('fieldData', JSON.stringify(this.field.fieldData));
+    }, 10000);
   }
 }
