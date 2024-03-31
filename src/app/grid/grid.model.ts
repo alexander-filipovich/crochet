@@ -36,8 +36,9 @@ export class Square {
         empty: new Texture(),
         filled: new Texture(),
     };
+    static size: number = 40;
+    static offset: Point = { x: 0.3, y: 0.3 };
     sprite: Sprite;
-    size: number = 0;
     position: Point = { x: 0, y: 0 };
     state: SquareState = SquareState.empty;
     cleared: boolean = true;
@@ -52,8 +53,8 @@ export class Square {
         Square.textures.filled = await Assets.load('assets/images/square/square-filled.png');
         Square.textures.empty = await Assets.load('assets/images/square/square-empty.png');
     }
-    setSize(size: number) {
-        this.size = size;
+    static setSize(size: number) {
+        Square.size = size;
     }
     setPosition(x: number, y: number) {
         this.position = { x: x, y: y };
@@ -69,8 +70,8 @@ export class Square {
             this.sprite.texture = Square.textures.filled;
         else 
             this.sprite.texture = Square.textures.empty;
-        this.sprite.setSize(this.size-2, this.size-2); // change later with texture
-        this.sprite.position.set(this.position.x*this.size+this.size/2, this.position.y*this.size+this.size/2);
+        this.sprite.setSize(Square.size-2, Square.size-2); // change later with texture
+        this.sprite.position.set(this.position.x*Square.size+Square.size*Square.offset.x, this.position.y*Square.size+Square.size*Square.offset.y);
         this.sprite.visible = true;
         this.cleared = false;
     }
@@ -160,10 +161,9 @@ export class Field {
 
     fieldSize: GridSize = { X: 50, Y: 30 };
 
-    squareSize: number = 40;
     canvasSize: GridSize = { X: 0, Y: 0 };
     gridSize: GridSize = { X: 0, Y: 0 };
-    offset: Point = { x: -1, y: -1 };
+    offset: Point = { x: -2, y: -2 };
 
     fieldData: Array<Array<number>>;
     squares: Array<Array<Square>>;
@@ -181,17 +181,29 @@ export class Field {
     }
     init() {}
 
+    updateSquareOffset(offset: Point) {
+        Square.offset = offset;
+        const offsetBorders = this.getOffsetBorders();
+        if (this.offset.x == offsetBorders.left)
+            Square.offset.x = 0;
+        if (this.offset.x == offsetBorders.right)
+            Square.offset.x = 1;
+        if (this.offset.y == offsetBorders.top)
+            Square.offset.y = 0;
+        if (this.offset.y == offsetBorders.bottom)
+            Square.offset.y = 1;
+    }
     getScaledGridPosition(canvasPosition: Point) {
         return {
-            x: Math.floor(canvasPosition.x/this.squareSize), 
-            y: Math.floor(canvasPosition.y/this.squareSize)
+            x: canvasPosition.x/Square.size, 
+            y: canvasPosition.y/Square.size,
         };
     }
     getScaledFieldPosition(canvasPosition: Point) {
         const position: Point = this.getScaledGridPosition(canvasPosition);
         return {
-            x: position.x+this.offset.x, 
-            y: position.y+this.offset.y
+            x: Math.floor(position.x)+this.offset.x, 
+            y: Math.floor(position.y)+this.offset.y,
         };
     }
     getSquareState(position: Point) {
@@ -208,8 +220,8 @@ export class Field {
     updateSize(canvasSize?: GridSize) {
         this.canvasSize = canvasSize ?? this.canvasSize;
         const newSize: GridSize = {
-            X: Math.floor(this.canvasSize.X/this.squareSize)+1, 
-            Y: Math.floor(this.canvasSize.Y/this.squareSize)+1
+            X: Math.floor(this.canvasSize.X/Square.size)+2, 
+            Y: Math.floor(this.canvasSize.Y/Square.size)+2,
         };
         if (this.gridSize.X == newSize.X && this.gridSize.Y == newSize.Y)
             return
@@ -220,8 +232,7 @@ export class Field {
             for (let y = 0; y < Math.max(this.gridSize.Y, newSize.Y); y++) {
                 if (this.squares[x].length <= y) {
                     const sq = new Square();
-                    sq.setPosition(x, y);
-                    sq.setSize(this.squareSize);
+                    sq.setPosition(x-1, y-1);
                     this.squares[x].push(sq);
                     this.app.stage.addChild(sq.sprite);
                 }
@@ -229,14 +240,13 @@ export class Field {
                 if (x > newSize.X || y > newSize.Y){
                     square.clear();
                 }
-                if (this.squareSize != square.size) {
-                    square.setSize(this.squareSize);
-                    square.clear();
-                }
             }
         }
         this.gridSize = newSize;
         this.updateGrid();
+    }
+    clearGrid() {
+        this.squares.flat().forEach(square => { square.clear() });
     }
     updateGrid() {
         for (let x = 0; x < this.gridSize.X; x++) {
@@ -274,17 +284,17 @@ export class Field {
 
     getOffsetBorders() {
         return {
-            left: -Math.floor(config.gridMaxOffsetPx.left/this.squareSize),
-            right: this.fieldSize.X-Math.floor(config.gridMaxOffsetPx.left/this.squareSize),
-            top: -Math.floor(config.gridMaxOffsetPx.top/this.squareSize),
-            bottom: this.fieldSize.Y-Math.floor(config.gridMaxOffsetPx.top/this.squareSize),
+            left: -Math.floor(config.gridMaxOffsetPx.left/Square.size),
+            right: this.fieldSize.X-Math.floor(config.gridMaxOffsetPx.left/Square.size),
+            top: -Math.floor(config.gridMaxOffsetPx.top/Square.size),
+            bottom: this.fieldSize.Y-Math.floor(config.gridMaxOffsetPx.top/Square.size),
         }
     }
     getOffsetPercent() {
         const offsetBorders = this.getOffsetBorders();
         return {
-            x: (this.offset.x - offsetBorders.left)/(offsetBorders.right - offsetBorders.left),
-            y: (this.offset.y - offsetBorders.top)/(offsetBorders.bottom - offsetBorders.top)
+            x: (this.offset.x - Square.offset.x - offsetBorders.left)/(offsetBorders.right - offsetBorders.left),
+            y: (this.offset.y - Square.offset.y - offsetBorders.top)/(offsetBorders.bottom - offsetBorders.top)
         }
     }
     fixOffset() {
@@ -293,12 +303,17 @@ export class Field {
         this.offset.y = getBetween(this.offset.y, offsetBorders.top, offsetBorders.bottom);
     }
     moveToPoint(canvasPosition: Point, squarePosition: Point) {
-        const position: Point = this.getScaledGridPosition(canvasPosition);        
+        const position: Point = this.getScaledGridPosition(canvasPosition); 
         this.offset = { 
-            x: squarePosition.x-position.x, 
-            y: squarePosition.y-position.y 
+            x: squarePosition.x - Math.floor(position.x), 
+            y: squarePosition.y - Math.floor(position.y), 
         };
-        this.fixOffset();
+        this.fixOffset(); 
+        this.updateSquareOffset({
+            x: position.x % 1, 
+            y: position.y % 1,
+        }); 
+        this.clearGrid();
         this.updateGrid();
     }
     moveToPercent(percent: Point) {
@@ -308,18 +323,20 @@ export class Field {
             y: offsetBorders.top + Math.floor(percent.y  * (offsetBorders.bottom - offsetBorders.top)),
         };
         this.fixOffset();
+        this.updateSquareOffset({
+            x: -(percent.x * (offsetBorders.right - offsetBorders.left)) % 1, 
+            y: -(percent.y * (offsetBorders.bottom - offsetBorders.top)) % 1,
+        }); 
+        this.clearGrid();
         this.updateGrid();
     }
 
-    fixSquareSize() {
-        this.squareSize = getBetween(this.squareSize, config.squareSizeRange.min, config.squareSizeRange.max);
-    }
     changeSquareSize(val: number, canvasPosition: Point) {
         const squarePosition: Point = this.getSquareData(canvasPosition).position;
-        this.squareSize += val;
-        this.fixSquareSize();
+        Square.size = getBetween(Square.size+val, config.squareSizeRange.min, config.squareSizeRange.max);
         this.fixOffset();
         this.updateSize();
+        this.clearGrid();
         this.moveToPoint(canvasPosition, squarePosition);
     }
 }
