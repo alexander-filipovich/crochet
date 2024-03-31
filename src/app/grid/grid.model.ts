@@ -12,6 +12,10 @@ export interface Point {
     x: number;
     y: number;
 }
+export interface GridSize {
+    X: number;
+    Y: number;
+}
 export enum SquareState {
     empty,
     filled,
@@ -38,7 +42,7 @@ export class Square {
     state: SquareState = SquareState.empty;
     cleared: boolean = true;
 
-    constructor(x?: number, y?: number) {
+    constructor() {
         this.sprite = new Sprite();
         this.sprite.anchor.set(0.5)
         this.sprite.zIndex = zIndexes.square;
@@ -101,7 +105,7 @@ export class ScrollBar {
     static texture: Texture;
     sprite: Sprite;
     size: Point = { x: 40, y: 40 };
-    offset: Point = { x: 60, y: 60 };
+    offset: Point = { x: 40, y: 40 };
     type: 'h' | 'v';
 
     constructor(type: 'h' | 'v') {
@@ -115,8 +119,8 @@ export class ScrollBar {
     }
     init() {
         this.sprite.texture = ScrollBar.texture;
-        this.sprite.setSize(this.size.x, this.size.y)
-        this.moveTo({x: this.size.x/2, y: this.size.y/2}, true);
+        this.sprite.setSize(this.size.x, this.size.y);
+        this.sprite.position.set(this.size.x/2, this.size.y/2);
         this.sprite.anchor.set(0.5);
         if (this.type == 'v') 
             this.sprite.rotation = Math.PI/2;
@@ -130,21 +134,27 @@ export class ScrollBar {
     onDragEnd() {
         ScrollBar.dragTarget = undefined;
     }
-    moveTo(pos: Point, force: boolean = false) {
-        if (force)
-            this.sprite.position.set(pos.x, pos.y)
+    moveTo(pos: Point, canvas: HTMLCanvasElement) {
         if (this.type == 'h')
-            this.sprite.x = Math.max(pos.x, this.offset.x);
+            this.sprite.x = getBetween(pos.x, this.offset.x + this.size.x/2, canvas.width - this.size.x/2);
         if (this.type == 'v')
-            this.sprite.y = Math.max(pos.y, this.offset.y);
+            this.sprite.y = getBetween(pos.y, this.offset.y + this.size.y/2, canvas.height - this.size.y/2);
+    }
+    moveToPercent(percent: Point, canvas: HTMLCanvasElement) {
+        if (this.type == 'h')
+            this.sprite.x = this.offset.x + this.size.x/2 + getBetween(percent.x, 0, 1)*(canvas.width - this.offset.x - this.size.x);
+        if (this.type == 'v')
+            this.sprite.y = this.offset.y + this.size.y/2 + getBetween(percent.y, 0, 1)*(canvas.height - this.offset.y - this.size.y);
+    }
+    getPercent(canvas: HTMLCanvasElement) {
+        if (this.type == 'h')
+            return (this.sprite.x - (this.offset.x + this.size.x/2))/(canvas.width - this.offset.x - this.size.x)
+        if (this.type == 'v')
+            return (this.sprite.y - (this.offset.y + this.size.y/2))/(canvas.height - this.offset.y - this.size.y)
+        return 0
     }
 }
 
-
-interface GridSize {
-    X: number;
-    Y: number;
-}
 export class Field {
     app: Application;
 
@@ -154,10 +164,6 @@ export class Field {
     canvasSize: GridSize = { X: 0, Y: 0 };
     gridSize: GridSize = { X: 0, Y: 0 };
     offset: Point = { x: -1, y: -1 };
-    scrollbars = {
-        h: new ScrollBar('h'),
-        v: new ScrollBar('v'),
-    };
 
     fieldData: Array<Array<number>>;
     squares: Array<Array<Square>>;
@@ -173,12 +179,7 @@ export class Field {
         this.squares = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Square()));
         this.crosses = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Cross()));
     }
-    init() {
-        Object.entries(this.scrollbars).forEach(([key, scrollbar]) => {
-            scrollbar.init();
-            this.app.stage.addChild(scrollbar.sprite);
-        });
-    }
+    init() {}
 
     getScaledGridPosition(canvasPosition: Point) {
         return {
@@ -271,21 +272,25 @@ export class Field {
         this.updateSquare(this.getScaledFieldPosition(canvasPosition), state);
     }
 
-    fixOffset() {
-        const offsetBorders = {
+    getOffsetBorders() {
+        return {
             left: -Math.floor(config.gridMaxOffsetPx.left/this.squareSize),
             right: this.fieldSize.X-Math.floor(config.gridMaxOffsetPx.left/this.squareSize),
             top: -Math.floor(config.gridMaxOffsetPx.top/this.squareSize),
             bottom: this.fieldSize.Y-Math.floor(config.gridMaxOffsetPx.top/this.squareSize),
         }
+    }
+    getOffsetPercent() {
+        const offsetBorders = this.getOffsetBorders();
+        return {
+            x: (this.offset.x - offsetBorders.left)/(offsetBorders.right - offsetBorders.left),
+            y: (this.offset.y - offsetBorders.top)/(offsetBorders.bottom - offsetBorders.top)
+        }
+    }
+    fixOffset() {
+        const offsetBorders = this.getOffsetBorders();
         this.offset.x = getBetween(this.offset.x, offsetBorders.left, offsetBorders.right);
         this.offset.y = getBetween(this.offset.y, offsetBorders.top, offsetBorders.bottom);
-        Object.entries(this.scrollbars).forEach(([key, scrollbar]) => {
-            scrollbar.moveTo({
-                x: ((this.offset.x - offsetBorders.left)/Math.max(1, offsetBorders.right - offsetBorders.left))*this.canvasSize.X, 
-                y: ((this.offset.y - offsetBorders.top)/Math.max(1, offsetBorders.bottom - offsetBorders.top))*this.canvasSize.Y, 
-            })
-        });
     }
     moveToPoint(canvasPosition: Point, squarePosition: Point) {
         const position: Point = this.getScaledGridPosition(canvasPosition);        
@@ -296,8 +301,14 @@ export class Field {
         this.fixOffset();
         this.updateGrid();
     }
-    moveToPercent() {
-
+    moveToPercent(percent: Point) {
+        const offsetBorders = this.getOffsetBorders();
+        this.offset = {
+            x: offsetBorders.left + Math.floor(percent.x * (offsetBorders.right - offsetBorders.left)),
+            y: offsetBorders.top + Math.floor(percent.y  * (offsetBorders.bottom - offsetBorders.top)),
+        };
+        this.fixOffset();
+        this.updateGrid();
     }
 
     fixSquareSize() {
