@@ -80,8 +80,8 @@ export class GridService {
 
   setListeners() {
     this.app.canvas.addEventListener('contextmenu', e => e.preventDefault());
-    this.app.canvas.addEventListener('mousedown', this.handleGridClick.bind(this));
-    this.app.canvas.addEventListener('mousemove', this.handleGridMousemove.bind(this));
+    this.app.canvas.addEventListener('pointerdown', this.handleGridClick.bind(this));
+    this.app.canvas.addEventListener('pointermove', this.handleGridMousemove.bind(this));
     this.app.canvas.addEventListener('wheel', this.handleGridWheel.bind(this), {'passive': true}); 
     window.addEventListener('keydown', this.handleGridKeyboard.bind(this));
     window.addEventListener('resize', this.resizeCanvas.bind(this));
