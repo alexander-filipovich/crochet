@@ -23,7 +23,6 @@ export class GridService {
 
   resizeCanvas() {
     const canvas = this.app.canvas;
-    
     this.field.updateSize({X: canvas.width, Y: canvas.height})
   }
   handleGridClick(event: MouseEvent) {
@@ -54,7 +53,8 @@ export class GridService {
     }
   }
   handleGridWheel(event: WheelEvent) {
-    this.field.changeSquareSize(-Math.sign(event.deltaY))
+    const pos = {x: event.offsetX, y: event.offsetY};
+    this.field.changeSquareSize(-Math.sign(event.deltaY), pos)
   }
   handleGridKeyboard(event: KeyboardEvent) {
     if (event.ctrlKey && event.shiftKey && event.key === 'Escape') {

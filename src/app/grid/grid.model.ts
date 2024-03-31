@@ -307,10 +307,12 @@ export class Field {
     fixSquareSize() {
         this.squareSize = getBetween(this.squareSize, config.squareSizeRange.min, config.squareSizeRange.max);
     }
-    changeSquareSize(val: number) {
+    changeSquareSize(val: number, canvasPosition: Point) {
+        const squarePosition: Point = this.getSquareData(canvasPosition).position;
         this.squareSize += val;
         this.fixSquareSize();
         this.fixOffset();
         this.updateSize();
+        this.moveToPoint(canvasPosition, squarePosition);
     }
 }
