@@ -48,7 +48,7 @@ export class GridService {
   handleGridMousemove(event: MouseEvent) {
     const pos = {x: event.offsetX, y: event.offsetY};
     if (ScrollBar.dragTarget && event.buttons === 1) {
-      ScrollBar.dragTarget.moveTo(pos.x, undefined);
+      ScrollBar.dragTarget.moveTo(pos);
     }
     else if (event.buttons === 1) {
       this.field.squareClick(pos, this.lastClickedSquare.state ?? SquareState.filled);

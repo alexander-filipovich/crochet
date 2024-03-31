@@ -94,21 +94,21 @@ export class ScrollBar {
     sprite: Sprite;
     size: Point = { x: 40, y: 40};
     position: Point = { x: 20, y: 20 };
-    //type: 'h' | 'v';
+    type: 'h' | 'v';
 
     constructor() {
         this.sprite = new Sprite();
         this.sprite.eventMode = 'static';
         this.sprite.zIndex = zIndexes.scrollbar;
+        this.type = 'h';
     }
     static async loadTexture(texture = 'assets/images/scrollbar.png') {
         ScrollBar.texture = await Assets.load(texture);
     }
     init() {
         this.sprite.texture = ScrollBar.texture;
-        //this.sprite.texture = Square.textures.filled;
         this.sprite.setSize(this.size.x, this.size.y)
-        this.moveTo(20, 20);
+        this.moveTo({x: 20, y: 20}, true);
         this.sprite.anchor.set(0.5);
         this.sprite.on('pointerdown', this.onDragStart.bind(this));
         this.sprite.on('pointerup', this.onDragEnd.bind(this));
@@ -120,11 +120,11 @@ export class ScrollBar {
     onDragEnd() {
         ScrollBar.dragTarget = undefined;
     }
-    moveTo(x?: number, y?: number) {
-        if (x)
-            this.sprite.x = x;
-        if (y)
-            this.sprite.y = y;
+    moveTo(pos: Point, force: boolean = false) {
+        if (this.type == 'h' || force)
+            this.sprite.x = pos.x;
+        if (this.type == 'v' || force)
+            this.sprite.y = pos.y;
     }
 }
 
@@ -144,6 +144,8 @@ export class Field {
 
     fieldData: Array<Array<number>>;
     squares: Array<Array<Square>>;
+    crosses: Array<Array<Cross>>;
+    scrollbars: Array<ScrollBar>;
     
     constructor(app: Application) {
         this.app = app;
@@ -153,6 +155,8 @@ export class Field {
             JSON.parse(fieldDataStored) : 
             Array.from({ length: this.fieldSize.X }, () => Array.from({ length: this.fieldSize.Y }, () => SquareState.empty));
         this.squares = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Square()));
+        this.crosses = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Cross()));
+        this.scrollbars = Array.from({ length: 2 }, () => new ScrollBar());
     }
 
     getScaledGridPosition(canvasPosition: Point) {
