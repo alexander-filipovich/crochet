@@ -1,4 +1,4 @@
-
+import { config } from '../config';
 import { Application, Assets, Graphics, Sprite, Texture } from 'pixi.js';
 
 export enum zIndexes {
@@ -16,6 +16,19 @@ export enum SquareState {
     empty,
     filled,
     __LENGTH
+}
+
+function getBetween(val: number, min: number, max: number, withZero: boolean = false) {
+    max = Math.max(min, max); // Max cannot be less then min
+    if (withZero) {
+        max = Math.max(0, max);
+        min = Math.min(0, min);
+    }
+    if (val < min)
+        return min;
+    if (val > max)
+        return max;
+    return val
 }
 
 export class Square {
@@ -38,7 +51,6 @@ export class Square {
     static async loadTextures() {
         Square.textures.filled = await Assets.load('assets/images/square/square-filled.png');
         Square.textures.empty = await Assets.load('assets/images/square/square-empty.png');
-        console.log("Square textures loaded");
     }
     setSize(size: number) {
         this.size = size;
@@ -96,11 +108,11 @@ export class ScrollBar {
     position: Point = { x: 20, y: 20 };
     type: 'h' | 'v';
 
-    constructor() {
+    constructor(type: 'h' | 'v') {
         this.sprite = new Sprite();
         this.sprite.eventMode = 'static';
         this.sprite.zIndex = zIndexes.scrollbar;
-        this.type = 'h';
+        this.type = type;
     }
     static async loadTexture(texture = 'assets/images/scrollbar.png') {
         ScrollBar.texture = await Assets.load(texture);
@@ -110,6 +122,8 @@ export class ScrollBar {
         this.sprite.setSize(this.size.x, this.size.y)
         this.moveTo({x: 20, y: 20}, true);
         this.sprite.anchor.set(0.5);
+        if (this.type == 'v') 
+            this.sprite.rotation = Math.PI/2;
         this.sprite.on('pointerdown', this.onDragStart.bind(this));
         this.sprite.on('pointerup', this.onDragEnd.bind(this));
         this.sprite.on('pointerupoutside', this.onDragEnd.bind(this));
@@ -136,16 +150,20 @@ interface GridSize {
 export class Field {
     app: Application;
 
-    fieldSize: GridSize = { X: 20, Y: 10 };
+    fieldSize: GridSize = { X: 50, Y: 30 };
 
     squareSize: number = 40;
+    canvasSize: GridSize = { X: 0, Y: 0 };
     gridSize: GridSize = { X: 0, Y: 0 };
     offset: Point = { x: -1, y: -1 };
+    scrollbars = {
+        h: new ScrollBar('h'),
+        v: new ScrollBar('v'),
+    };
 
     fieldData: Array<Array<number>>;
     squares: Array<Array<Square>>;
     crosses: Array<Array<Cross>>;
-    scrollbars: Array<ScrollBar>;
     
     constructor(app: Application) {
         this.app = app;
@@ -156,7 +174,12 @@ export class Field {
             Array.from({ length: this.fieldSize.X }, () => Array.from({ length: this.fieldSize.Y }, () => SquareState.empty));
         this.squares = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Square()));
         this.crosses = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Cross()));
-        this.scrollbars = Array.from({ length: 2 }, () => new ScrollBar());
+    }
+    init() {
+        Object.entries(this.scrollbars).forEach(([key, scrollbar]) => {
+            scrollbar.init();
+            this.app.stage.addChild(scrollbar.sprite);
+        });
     }
 
     getScaledGridPosition(canvasPosition: Point) {
@@ -183,10 +206,11 @@ export class Field {
         };
     }
 
-    updateSize(canvasWidth: number, canvasHeight: number) {
+    updateSize(canvasSize?: GridSize) {
+        this.canvasSize = canvasSize ?? this.canvasSize;
         const newSize: GridSize = {
-            X: Math.floor(canvasWidth/this.squareSize)+1, 
-            Y: Math.floor(canvasHeight/this.squareSize)+1
+            X: Math.floor(this.canvasSize.X/this.squareSize)+1, 
+            Y: Math.floor(this.canvasSize.Y/this.squareSize)+1
         };
         if (this.gridSize.X == newSize.X && this.gridSize.Y == newSize.Y)
             return
@@ -202,8 +226,13 @@ export class Field {
                     this.squares[x].push(sq);
                     this.app.stage.addChild(sq.sprite);
                 }
+                const square = this.squares[x][y];
                 if (x > newSize.X || y > newSize.Y){
-                    this.squares[x][y].clear();
+                    square.clear();
+                }
+                if (this.squareSize != square.size) {
+                    square.setSize(this.squareSize);
+                    square.clear();
                 }
             }
         }
@@ -213,16 +242,17 @@ export class Field {
     updateGrid() {
         for (let x = 0; x < this.gridSize.X; x++) {
             for (let y = 0; y < this.gridSize.Y; y++) {
+                const square = this.squares[x][y];
                 const pos = {
                     x: x+this.offset.x,
                     y: y+this.offset.y
-                }     
-                const state = this.getSquareState(pos);      
+                }
+                const state = this.getSquareState(pos);    
                 if (state == undefined) {
-                    this.squares[x][y].clear();
+                    square.clear();
                 }
                 else {
-                    this.squares[x][y].setState(state);
+                    square.setState(state);
                 }
             }
         }
@@ -243,12 +273,37 @@ export class Field {
         this.updateSquare(this.getScaledFieldPosition(canvasPosition), state);
     }
 
+    fixOffset() {
+        const offsetBorders = {
+            left: -Math.floor(config.gridMaxOffsetPx.left/this.squareSize),
+            right: this.fieldSize.X-(this.gridSize.X)+Math.floor(config.gridMaxOffsetPx.right/this.squareSize)+1,
+            top: -Math.floor(config.gridMaxOffsetPx.top/this.squareSize),
+            bottom: this.fieldSize.Y-(this.gridSize.Y)+Math.floor(config.gridMaxOffsetPx.bottom/this.squareSize)+1,
+        }
+        this.offset.x = getBetween(this.offset.x, offsetBorders.left, offsetBorders.right, true);
+        this.offset.y = getBetween(this.offset.y, offsetBorders.top, offsetBorders.bottom, true);
+    }
     moveToPoint(canvasPosition: Point, squarePosition: Point) {
         const position: Point = this.getScaledGridPosition(canvasPosition);        
         this.offset = { 
             x: squarePosition.x-position.x, 
             y: squarePosition.y-position.y 
         };
+        this.fixOffset();
+        //this.scrollbars.h.moveTo({x:this.offset.x*20, y:0})
         this.updateGrid();
+    }
+    moveToPercent() {
+
+    }
+
+    fixSquareSize() {
+        this.squareSize = getBetween(this.squareSize, config.squareSizeRange.min, config.squareSizeRange.max);
+    }
+    changeSquareSize(val: number) {
+        this.squareSize += val;
+        this.fixSquareSize();
+        this.fixOffset();
+        this.updateSize();
     }
 }

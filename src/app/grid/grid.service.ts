@@ -10,25 +10,21 @@ export class GridService {
   app: Application;
   field: Field;
   lastClickedSquare: any;
-  sb: ScrollBar;
   
   constructor() {
     this.app = new Application; 
     this.field = new Field(this.app);
-    this.lastClickedSquare;
-
-    this.sb = new ScrollBar();
-    this.app.stage.addChild(this.sb.sprite);
   }
   async init() {
     await Square.loadTextures();
     await ScrollBar.loadTexture(); 
-    this.sb.init()
+    this.field.init()
   }
 
   resizeCanvas() {
     const canvas = this.app.canvas;
-    this.field.updateSize(canvas.width, canvas.height)
+    
+    this.field.updateSize({X: canvas.width, Y: canvas.height})
   }
   handleGridClick(event: MouseEvent) {
     //console.log('Canvas clicked!', event);
@@ -57,6 +53,9 @@ export class GridService {
       this.field.moveToPoint(pos, this.lastClickedSquare.position);
     }
   }
+  handleGridWheel(event: WheelEvent) {
+    this.field.changeSquareSize(-Math.sign(event.deltaY))
+  }
   handleGridKeyboard(event: KeyboardEvent) {
     if (event.ctrlKey && event.shiftKey && event.key === 'Escape') {
       this.field.clear();
@@ -68,6 +67,7 @@ export class GridService {
     this.app.canvas.addEventListener('contextmenu', e => e.preventDefault());
     this.app.canvas.addEventListener('mousedown', this.handleGridClick.bind(this));
     this.app.canvas.addEventListener('mousemove', this.handleGridMousemove.bind(this));
+    this.app.canvas.addEventListener('wheel', this.handleGridWheel.bind(this)); 
     window.addEventListener('keydown', this.handleGridKeyboard.bind(this));
     window.addEventListener('resize', this.resizeCanvas.bind(this));
   }
