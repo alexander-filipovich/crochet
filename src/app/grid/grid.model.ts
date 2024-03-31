@@ -1,4 +1,4 @@
-import { config } from '../config';
+import { config } from '../../config';
 import { Application, Assets, Graphics, Sprite, Texture } from 'pixi.js';
 
 export enum zIndexes {
@@ -104,8 +104,8 @@ export class ScrollBar {
     static dragTarget?: ScrollBar;
     static texture: Texture;
     sprite: Sprite;
-    size: Point = { x: 40, y: 40};
-    position: Point = { x: 20, y: 20 };
+    size: Point = { x: 40, y: 40 };
+    offset: Point = { x: 60, y: 60 };
     type: 'h' | 'v';
 
     constructor(type: 'h' | 'v') {
@@ -120,7 +120,7 @@ export class ScrollBar {
     init() {
         this.sprite.texture = ScrollBar.texture;
         this.sprite.setSize(this.size.x, this.size.y)
-        this.moveTo({x: 20, y: 20}, true);
+        this.moveTo({x: this.size.x/2, y: this.size.y/2}, true);
         this.sprite.anchor.set(0.5);
         if (this.type == 'v') 
             this.sprite.rotation = Math.PI/2;
@@ -135,10 +135,12 @@ export class ScrollBar {
         ScrollBar.dragTarget = undefined;
     }
     moveTo(pos: Point, force: boolean = false) {
-        if (this.type == 'h' || force)
-            this.sprite.x = pos.x;
-        if (this.type == 'v' || force)
-            this.sprite.y = pos.y;
+        if (force)
+            this.sprite.position.set(pos.x, pos.y)
+        if (this.type == 'h')
+            this.sprite.x = Math.max(pos.x, this.offset.x);
+        if (this.type == 'v')
+            this.sprite.y = Math.max(pos.y, this.offset.y);
     }
 }
 
@@ -282,6 +284,12 @@ export class Field {
         }
         this.offset.x = getBetween(this.offset.x, offsetBorders.left, offsetBorders.right, true);
         this.offset.y = getBetween(this.offset.y, offsetBorders.top, offsetBorders.bottom, true);
+        Object.entries(this.scrollbars).forEach(([key, scrollbar]) => {
+            scrollbar.moveTo({
+                x: ((this.offset.x - offsetBorders.left)/Math.max(1, offsetBorders.right - offsetBorders.left))*this.canvasSize.X, 
+                y: ((this.offset.y - offsetBorders.top)/Math.max(1, offsetBorders.bottom - offsetBorders.top))*this.canvasSize.Y, 
+            })
+        });
     }
     moveToPoint(canvasPosition: Point, squarePosition: Point) {
         const position: Point = this.getScaledGridPosition(canvasPosition);        
@@ -290,7 +298,6 @@ export class Field {
             y: squarePosition.y-position.y 
         };
         this.fixOffset();
-        //this.scrollbars.h.moveTo({x:this.offset.x*20, y:0})
         this.updateGrid();
     }
     moveToPercent() {
