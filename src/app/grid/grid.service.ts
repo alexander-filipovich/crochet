@@ -25,6 +25,7 @@ export class GridService {
     this.field.init()
     Object.entries(this.scrollbars).forEach(([key, scrollbar]) => {
         scrollbar.init();
+        this.app.stage.addChild(scrollbar.bg);
         this.app.stage.addChild(scrollbar.sprite);
         scrollbar.moveToPercent(this.field.getOffsetPercent(), this.app.canvas);
     });

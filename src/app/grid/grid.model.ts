@@ -5,6 +5,7 @@ export enum zIndexes {
     background,
     square, 
     cross,
+    scrollbarBG,
     scrollbar
 }
 
@@ -50,8 +51,8 @@ export class Square {
         this.sprite.visible = false;
     }
     static async loadTextures() {
-        Square.textures.filled = await Assets.load('assets/images/square/square-filled.png');
-        Square.textures.empty = await Assets.load('assets/images/square/square-empty.png');
+        Square.textures.filled = await Assets.load('assets/images/square/FilledSquare.svg');
+        Square.textures.empty = await Assets.load('assets/images/square/EmptySquare.svg');
     }
     static setSize(size: number) {
         Square.size = size;
@@ -70,7 +71,7 @@ export class Square {
             this.sprite.texture = Square.textures.filled;
         else 
             this.sprite.texture = Square.textures.empty;
-        this.sprite.setSize(Square.size-2, Square.size-2); // change later with texture
+        this.sprite.setSize(Square.size, Square.size);
         this.sprite.position.set(this.position.x*Square.size+Square.size*Square.offset.x, this.position.y*Square.size+Square.size*Square.offset.y);
         this.sprite.visible = true;
         this.cleared = false;
@@ -104,27 +105,39 @@ export class Cross {
 export class ScrollBar {
     static dragTarget?: ScrollBar;
     static texture: Texture;
+    static textureBG: Texture;
     sprite: Sprite;
+    bg: Sprite;
     size: Point = { x: 40, y: 40 };
     offset: Point = { x: 40, y: 40 };
     type: 'h' | 'v';
 
     constructor(type: 'h' | 'v') {
+        this.bg = new Sprite();
+        this.bg.zIndex = zIndexes.scrollbarBG;
+
         this.sprite = new Sprite();
         this.sprite.eventMode = 'static';
         this.sprite.zIndex = zIndexes.scrollbar;
         this.type = type;
     }
-    static async loadTexture(texture = 'assets/images/scrollbar.png') {
-        ScrollBar.texture = await Assets.load(texture);
+    static async loadTexture() {
+        ScrollBar.texture = await Assets.load('assets/images/ScrollBar.png');
+        ScrollBar.textureBG = await Assets.load('assets/images/ScrollBG.svg');
     }
     init() {
+        this.bg.texture = ScrollBar.textureBG;
+        this.bg.width = 10000; // Just a big number cause I don't want to resize it, will fix it later
+
         this.sprite.texture = ScrollBar.texture;
-        this.sprite.setSize(this.size.x, this.size.y);
-        this.sprite.position.set(this.size.x/2, this.size.y/2);
+        //this.sprite.setSize(this.size.x, this.size.y);
+        this.sprite.position.set(this.sprite.height/2, this.sprite.height/2);
         this.sprite.anchor.set(0.5);
-        if (this.type == 'v') 
+        if (this.type == 'v') {
+            this.bg.anchor.set(0, 1);
+            this.bg.rotation = Math.PI/2;
             this.sprite.rotation = Math.PI/2;
+        }
         this.sprite.on('pointerdown', this.onDragStart.bind(this));
         this.sprite.on('pointerup', this.onDragEnd.bind(this));
         this.sprite.on('pointerupoutside', this.onDragEnd.bind(this));
@@ -137,21 +150,21 @@ export class ScrollBar {
     }
     moveTo(pos: Point, canvas: HTMLCanvasElement) {
         if (this.type == 'h')
-            this.sprite.x = getBetween(pos.x, this.offset.x + this.size.x/2, canvas.width - this.size.x/2);
+            this.sprite.x = getBetween(pos.x, this.sprite.width/2, canvas.width - this.sprite.width/2);
         if (this.type == 'v')
-            this.sprite.y = getBetween(pos.y, this.offset.y + this.size.y/2, canvas.height - this.size.y/2);
+            this.sprite.y = getBetween(pos.y, this.sprite.width/2, canvas.height - this.sprite.width/2); 
     }
     moveToPercent(percent: Point, canvas: HTMLCanvasElement) {
         if (this.type == 'h')
-            this.sprite.x = this.offset.x + this.size.x/2 + getBetween(percent.x, 0, 1)*(canvas.width - this.offset.x - this.size.x);
+            this.sprite.x = this.sprite.width/2 + getBetween(percent.x, 0, 1)*(canvas.width  - this.sprite.width);
         if (this.type == 'v')
-            this.sprite.y = this.offset.y + this.size.y/2 + getBetween(percent.y, 0, 1)*(canvas.height - this.offset.y - this.size.y);
+            this.sprite.y = this.sprite.width/2 + getBetween(percent.y, 0, 1)*(canvas.height - this.sprite.width);
     }
     getPercent(canvas: HTMLCanvasElement) {
         if (this.type == 'h')
-            return (this.sprite.x - (this.offset.x + this.size.x/2))/(canvas.width - this.offset.x - this.size.x)
+            return (this.sprite.x - this.sprite.width/2)/(canvas.width - this.sprite.width)
         if (this.type == 'v')
-            return (this.sprite.y - (this.offset.y + this.size.y/2))/(canvas.height - this.offset.y - this.size.y)
+            return (this.sprite.y - this.sprite.width/2)/(canvas.height - this.sprite.width)
         return 0
     }
 }
@@ -181,8 +194,11 @@ export class Field {
     }
     init() {}
 
-    updateSquareOffset(offset: Point) {
+    updateSquareOffset(offset: Point, fix: boolean = false) {
         Square.offset = offset;
+        if (!fix)
+            return
+        // Prevent square offset from changes on field borders
         const offsetBorders = this.getOffsetBorders();
         if (this.offset.x == offsetBorders.left)
             Square.offset.x = 0;
@@ -195,15 +211,15 @@ export class Field {
     }
     getScaledGridPosition(canvasPosition: Point) {
         return {
-            x: canvasPosition.x/Square.size, 
-            y: canvasPosition.y/Square.size,
+            x: canvasPosition.x/Square.size+1, 
+            y: canvasPosition.y/Square.size+1,
         };
     }
     getScaledFieldPosition(canvasPosition: Point) {
         const position: Point = this.getScaledGridPosition(canvasPosition);
         return {
-            x: Math.floor(position.x)+this.offset.x, 
-            y: Math.floor(position.y)+this.offset.y,
+            x: Math.floor(position.x-Square.offset.x+0.5)+this.offset.x, 
+            y: Math.floor(position.y-Square.offset.y+0.5)+this.offset.y,
         };
     }
     getSquareState(position: Point) {
@@ -220,8 +236,8 @@ export class Field {
     updateSize(canvasSize?: GridSize) {
         this.canvasSize = canvasSize ?? this.canvasSize;
         const newSize: GridSize = {
-            X: Math.floor(this.canvasSize.X/Square.size)+2, 
-            Y: Math.floor(this.canvasSize.Y/Square.size)+2,
+            X: Math.floor(this.canvasSize.X/Square.size)+3, 
+            Y: Math.floor(this.canvasSize.Y/Square.size)+3,
         };
         if (this.gridSize.X == newSize.X && this.gridSize.Y == newSize.Y)
             return
@@ -232,7 +248,7 @@ export class Field {
             for (let y = 0; y < Math.max(this.gridSize.Y, newSize.Y); y++) {
                 if (this.squares[x].length <= y) {
                     const sq = new Square();
-                    sq.setPosition(x-1, y-1);
+                    sq.setPosition(x-1, y-1); // I want to have 1 additional square on top and left sides
                     this.squares[x].push(sq);
                     this.app.stage.addChild(sq.sprite);
                 }
@@ -293,8 +309,8 @@ export class Field {
     getOffsetPercent() {
         const offsetBorders = this.getOffsetBorders();
         return {
-            x: (this.offset.x - Square.offset.x - offsetBorders.left)/(offsetBorders.right - offsetBorders.left),
-            y: (this.offset.y - Square.offset.y - offsetBorders.top)/(offsetBorders.bottom - offsetBorders.top)
+            x: (this.offset.x - Square.offset.x - offsetBorders.left)/(offsetBorders.right - offsetBorders.left - 1),
+            y: (this.offset.y - Square.offset.y - offsetBorders.top)/(offsetBorders.bottom - offsetBorders.top - 1)
         }
     }
     fixOffset() {
@@ -312,20 +328,20 @@ export class Field {
         this.updateSquareOffset({
             x: position.x % 1, 
             y: position.y % 1,
-        }); 
+        }, true); 
         this.clearGrid();
         this.updateGrid();
     }
     moveToPercent(percent: Point) {
         const offsetBorders = this.getOffsetBorders();
         this.offset = {
-            x: offsetBorders.left + Math.floor(percent.x * (offsetBorders.right - offsetBorders.left)),
-            y: offsetBorders.top + Math.floor(percent.y  * (offsetBorders.bottom - offsetBorders.top)),
+            x: Math.floor(offsetBorders.left + percent.x * (offsetBorders.right  - offsetBorders.left - 1)),
+            y: Math.floor(offsetBorders.top  + percent.y * (offsetBorders.bottom - offsetBorders.top  - 1)),
         };
         this.fixOffset();
         this.updateSquareOffset({
-            x: -(percent.x * (offsetBorders.right - offsetBorders.left)) % 1, 
-            y: -(percent.y * (offsetBorders.bottom - offsetBorders.top)) % 1,
+            x: -(percent.x * (offsetBorders.right  - offsetBorders.left - 1)) % 1, 
+            y: -(percent.y * (offsetBorders.bottom - offsetBorders.top  - 1)) % 1,
         }); 
         this.clearGrid();
         this.updateGrid();
