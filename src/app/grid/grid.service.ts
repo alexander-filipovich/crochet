@@ -2,6 +2,7 @@ import { HostListener, Injectable } from '@angular/core';
 import { Application } from 'pixi.js';
 import { Field, Point, ScrollBar, Square, SquareState } from './grid.model';
 import { NONE_TYPE } from '@angular/compiler';
+import { timestamp } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -85,6 +86,7 @@ export class GridService {
     this.app.canvas.addEventListener('pointermove', this.handleGridMousemove.bind(this));
     this.app.canvas.addEventListener('wheel', this.handleGridWheel.bind(this), {'passive': true}); 
     window.addEventListener('keydown', this.handleGridKeyboard.bind(this));
+    window.addEventListener('resize', ()=>{console.log("Window resized" + console.timeLog())});
     window.addEventListener('resize', this.resizeCanvas.bind(this));
 
     setInterval(() => {

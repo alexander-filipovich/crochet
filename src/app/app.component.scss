@@ -18,11 +18,19 @@
         background-color: #F1EEDC;
     }
 
+    .block {
+        padding-bottom: 5%;
+        background-color: #e0dcc4;
+        margin: 4%;
+        border-radius: .2em;
+
+    }
+
     .objectHolder {
         display: flex; /* or inline-flex */
         flex-direction: row;
-        justify-content: space-between;
-        margin-top: 5%;
+        justify-content: space-around;
+        margin-top: 2%;
         margin-left: 5%;
         margin-right: 5%;
         flex-wrap: wrap;
@@ -34,9 +42,13 @@
         padding-bottom: 10px;
         width: 90%;
         align-self: center;
-        font-size: 10pt;
+        font-size: 12pt;
         font-style: italic;
         color: #B3C8CF;
+    }
+
+    .smallInputField {
+        width: 15%;
     }
 
     button.filled{
@@ -83,6 +95,7 @@
         color: #655421;
         margin-top: 1%;
         margin-bottom: 1%;
+        align-self: center;
     }
 
     .icons {
