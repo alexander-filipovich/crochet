@@ -1,41 +1,4 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-<div class="menuContainer">
-    <input type="text" class="txtField" value="Project Name">
-    <div class="block">
-        <div class="objectHolder"><p class="textSimple">Canvas size</p></div>
-    <div class="objectHolder">
-        <p class="textSimple">Width</p>
-        <input type="number" min="1" max="1000" class="txtField smallInputField" value="1">
-        <p class="textSimple">Heigh</p>
-        <input type="number" min="1" max="1000" class="txtField smallInputField" value="1">
-    </div>
-    </div>
-    
-    <div class="objectHolder">
-        <p class="textSimple">Auto Cross Placement</p>
-        <label class="switch ">
-            <input type="checkbox">
-            <span class="slider round"></span>
-        </label>
-    </div>
-    <div class="objectHolder">
-        <button class="filled">
-            <i class="fa-solid fa-magnifying-glass-plus icons"></i>Zoom In
-        </button>
-        <button class="filled"><i class="fa-solid fa-magnifying-glass-minus icons"></i>Zoom Out
-        </button>
-    </div>
-    <div class="objectHolder">
-        <button class="filled"><i class="fa-solid fa-copy icons"></i>Copy</button>
-        <button class="filled"><i class="fa-solid fa-paste icons"></i>Paste</button>
-        <button class="filled"><i class="fa-solid fa-scissors icons"></i>Cut</button>
-    </div>
-    <div class="objectHolder">
-        <button class="filled Huge Clear"><i class="fa-solid fa-broom icons"></i>Clear field</button>
-        <button class="filled Huge"><i class="fa-solid fa-floppy-disk icons"></i>Save</button>
-    </div>
-</div>
-
-
+<app-menu></app-menu>
 <app-grid></app-grid>
