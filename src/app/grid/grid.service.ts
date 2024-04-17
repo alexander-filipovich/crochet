@@ -1,13 +1,14 @@
-import { HostListener, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Application } from 'pixi.js';
 import { Field, Point, ScrollBar, Square, SquareState } from './grid.model';
-import { NONE_TYPE } from '@angular/compiler';
-import { timestamp } from 'rxjs';
+import { EventType } from '../events/event-listener.model';
+import { EventListenerService } from '../events/event-listener.service';
+import { Subscription } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
-export class GridService {
+export class GridService {  
   app: Application;
   field: Field;
   scrollbars = {
@@ -16,7 +17,7 @@ export class GridService {
   };
   lastClickedSquare: any;
   
-  constructor() {
+  constructor(private eventService: EventListenerService) {
     this.app = new Application; 
     this.field = new Field(this.app);
   }
@@ -86,8 +87,22 @@ export class GridService {
     this.app.canvas.addEventListener('pointermove', this.handleGridMousemove.bind(this));
     this.app.canvas.addEventListener('wheel', this.handleGridWheel.bind(this), {'passive': true}); 
     window.addEventListener('keydown', this.handleGridKeyboard.bind(this));
-    window.addEventListener('resize', ()=>{console.log("Window resized" + console.timeLog())});
     window.addEventListener('resize', this.resizeCanvas.bind(this));
+
+    this.eventService.events$.subscribe(event => {
+      switch (event.type) {
+        case EventType.ClearField:
+          this.field.clear();
+          break;
+        case EventType.ZoomChange:
+          const pos = {x: 0, y: 0};
+          this.field.changeSquareSize(event.payload.delta, pos);
+          break;
+        case EventType.ChangeFieldSize:
+          console.log('ChangeFieldSize event:', event.payload);
+          break;
+      }
+    });
 
     setInterval(() => {
       localStorage.setItem('fieldData', JSON.stringify(this.field.fieldData));

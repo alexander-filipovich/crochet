@@ -12,17 +12,14 @@ import { ScrollBar } from './grid.model';
 export class GridComponent implements AfterViewInit {
   @ViewChild('gridContainer') gridContainer!: ElementRef;
   
-  gridServise: GridService;
-  constructor() {
-    this.gridServise = new GridService();
-  }
+  constructor(private gridService: GridService) { }
   
   async ngAfterViewInit() {
-    await this.gridServise.app.init({ background: 0xA0A0A0, resizeTo: this.gridContainer.nativeElement });
-    await this.gridServise.init();
-    this.gridContainer.nativeElement.appendChild(this.gridServise.app.canvas);
-    this.gridServise.setListeners();
-    this.gridServise.resizeCanvas();
+    await this.gridService.app.init({ background: 0xA0A0A0, resizeTo: this.gridContainer.nativeElement });
+    await this.gridService.init();
+    this.gridContainer.nativeElement.appendChild(this.gridService.app.canvas);
+    this.gridService.setListeners();
+    this.gridService.resizeCanvas();
   }
 
 }
