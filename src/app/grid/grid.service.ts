@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Application } from 'pixi.js';
-import { Field, Point, ScrollBar, Square, SquareState } from './grid.model';
+import { Cross, Field, Point, ScrollBar, Square, SquareState } from './grid.model';
 import { EventType } from '../events/event-listener.model';
 import { EventListenerService } from '../events/event-listener.service';
 import { Subscription } from 'rxjs';
@@ -23,6 +23,7 @@ export class GridService {
   }
   async init() {
     await Square.loadTextures();
+    await Cross.loadTexture();
     await ScrollBar.loadTexture(); 
     this.field.init()
     Object.entries(this.scrollbars).forEach(([key, scrollbar]) => {
@@ -99,13 +100,19 @@ export class GridService {
           this.field.changeSquareSize(event.payload.delta, pos);
           break;
         case EventType.ChangeFieldSize:
-          console.log('ChangeFieldSize event:', event.payload);
+          this.field.changeFieldSize({X: event.payload.width, Y: event.payload.height});
           break;
       }
+    });
+    
+    this.eventService.isDrawCrossChecked$.subscribe(checked => {
+      this.field.drawCrosses = checked;
+      this.field.updateGrid();
     });
 
     setInterval(() => {
       localStorage.setItem('fieldData', JSON.stringify(this.field.fieldData));
+      localStorage.setItem('fieldSize', JSON.stringify(this.field.fieldSize));
     }, 10000);
   }
 }

@@ -32,6 +32,25 @@ function getBetween(val: number, min: number, max: number) {
     return val
 }
 
+export class Cross {
+    static texture: Texture;
+    sprite: Sprite;
+    cleared: boolean = true;
+
+    constructor() {
+        if (!Cross.texture) {
+            throw new Error("Texture not loaded");
+        }
+        this.sprite = new Sprite(Cross.texture);
+        this.sprite.anchor.set(0.5)
+        this.sprite.zIndex = 100; //zIndexes.cross;
+        this.sprite.visible = false;
+    }
+    static async loadTexture(texture = 'assets/images/cross/CrossMainColor.svg') {
+        Cross.texture = await Assets.load(texture);
+    }
+}
+
 export class Square {
     static textures = {
         empty: new Texture(),
@@ -43,6 +62,10 @@ export class Square {
     position: Point = { x: 0, y: 0 };
     state: SquareState = SquareState.empty;
     cleared: boolean = true;
+
+    static crossScale: number = 0.5;
+    cross: Cross = new Cross();
+    crossState: boolean = false;
 
     constructor() {
         this.sprite = new Sprite();
@@ -60,10 +83,14 @@ export class Square {
     setPosition(x: number, y: number) {
         this.position = { x: x, y: y };
     }
-    setState(state: SquareState) {
+    setState(state: SquareState, crossState: boolean = false) {
         if (this.state != state || this.cleared) {
             this.state = state;
             this.draw()
+        }
+        if (this.crossState != crossState || this.cleared) {
+            this.crossState = crossState;
+            this.drawCross()
         }
     }
     draw() {
@@ -76,29 +103,22 @@ export class Square {
         this.sprite.visible = true;
         this.cleared = false;
     }
+    drawCross() {
+        if (this.crossState) {
+            this.cross.sprite.setSize(Square.size*Square.crossScale, Square.size*Square.crossScale);
+            this.cross.sprite.position.set(this.sprite.position.x, this.sprite.position.y);
+            this.cross.sprite.visible = true;
+        }
+        else {
+            this.cross.sprite.visible = false;
+        }
+    }
     clear() {
         if (this.cleared)
             return
         this.sprite.visible = false;
+        this.cross.sprite.visible = false;
         this.cleared = true;
-    }
-}
-
-
-export class Cross {
-    static texture: Texture;
-    sprite: Sprite;
-    cleared: boolean = true;
-
-    constructor() {
-        if (!Cross.texture) {
-            throw new Error("Texture not loaded");
-        }
-        this.sprite = new Sprite(Cross.texture);
-        this.sprite.visible = false;
-    }
-    static async loadTexture(texture = 'assets/images/cross.png') {
-        Cross.texture = await Assets.load(texture);
     }
 }
 
@@ -180,19 +200,31 @@ export class Field {
 
     fieldData: Array<Array<number>>;
     squares: Array<Array<Square>>;
-    crosses: Array<Array<Cross>>;
+    drawCrosses: boolean = false;
     
     constructor(app: Application) {
         this.app = app;
-
+        const fieldSizeStored = localStorage.getItem('fieldSize');
+        this.fieldSize = fieldSizeStored ? JSON.parse(fieldSizeStored) : this.fieldSize;
         const fieldDataStored = localStorage.getItem('fieldData');
         this.fieldData = fieldDataStored ? 
             JSON.parse(fieldDataStored) : 
             Array.from({ length: this.fieldSize.X }, () => Array.from({ length: this.fieldSize.Y }, () => SquareState.empty));
         this.squares = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Square()));
-        this.crosses = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Cross()));
     }
     init() {}
+
+    changeFieldSize(size: GridSize) {
+        const fieldData = Array.from({ length: size.X }, () => Array.from({ length: size.Y }, () => SquareState.empty));
+        for (let x = 0; x < Math.min(size.X, this.fieldSize.X); x++) {
+            for (let y = 0; y < Math.min(size.Y, this.fieldSize.Y); y++) {
+                fieldData[x][y] = this.fieldData[x][y];
+            }
+        }
+        this.fieldSize = size;
+        this.fieldData = fieldData;
+        this.updateGrid();
+    }
 
     updateSquareOffset(offset: Point, fix: boolean = false) {
         Square.offset = offset;
@@ -223,7 +255,16 @@ export class Field {
         };
     }
     getSquareState(position: Point) {
-        return this.fieldData[position.x]?.[position.y] ?? null
+        // return this.fieldData[position.x]?.[position.y] ?? null;
+        // mirrored state
+        return this.fieldData[this.fieldSize.X-position.x-1]?.[this.fieldSize.Y-position.y-1] ?? null
+    }
+    setSquareState(position: Point, state: SquareState) {
+        if (this.getSquareState(position) == undefined) 
+            return;
+        // this.fieldData[position.x][position.y] = state;
+        // mirrored state
+        this.fieldData[this.fieldSize.X-position.x-1][this.fieldSize.Y-position.y-1] = state;
     }
     getSquareData(canvasPosition: Point) {
         const position: Point = this.getScaledFieldPosition(canvasPosition);
@@ -251,6 +292,7 @@ export class Field {
                     sq.setPosition(x-1, y-1); // I want to have 1 additional square on top and left sides
                     this.squares[x].push(sq);
                     this.app.stage.addChild(sq.sprite);
+                    this.app.stage.addChild(sq.cross.sprite);
                 }
                 const square = this.squares[x][y];
                 if (x > newSize.X || y > newSize.Y){
@@ -278,6 +320,7 @@ export class Field {
                 }
                 else {
                     square.setState(state);
+                    this.updateCross(pos);
                 }
             }
         }
@@ -286,13 +329,26 @@ export class Field {
         this.fieldData = Array.from({ length: this.fieldSize.X }, () => Array.from({ length: this.fieldSize.Y }, () => SquareState.empty));
         this.updateGrid();
     }
+    updateCross(position: Point) {
+        if (this.getSquareState(position) == undefined)
+            return
+        const sq = this.squares[position.x-this.offset.x][position.y-this.offset.y];
+        const sqState = this.getSquareState(position);
+        const crossState = (this.getSquareState(position) != undefined
+            && this.getSquareState(position) == this.getSquareState({x: position.x, y: position.y+1})
+            && this.getSquareState(position) == this.getSquareState({x: position.x, y: position.y+2})
+            && (this.getSquareState(position)+position.y+1) % 2 == 0
+            && this.drawCrosses
+            ) ? true : false;
+        sq.setState(sqState, crossState);
+    }
     updateSquare(position: Point, state?: SquareState) {
         if (this.getSquareState(position) == undefined)
             return
-        const newState = (state != undefined) ? state : (this.fieldData[position.x][position.y] + 1) % SquareState.__LENGTH;
-        this.fieldData[position.x][position.y] = newState;
-        const sq = this.squares[position.x-this.offset.x][position.y-this.offset.y]
-        sq.setState(newState);
+        const newState = (state != undefined) ? state : (this.getSquareState(position) + 1) % SquareState.__LENGTH;
+        this.setSquareState(position, newState);
+        for (let _y = 0; _y <= 2; _y++)
+            this.updateCross({x: position.x, y: position.y-_y});
     }
     squareClick(canvasPosition: Point, state?: SquareState) {
         this.updateSquare(this.getScaledFieldPosition(canvasPosition), state);

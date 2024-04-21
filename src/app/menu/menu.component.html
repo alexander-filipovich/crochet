@@ -1,18 +1,26 @@
 <input type="text" class="txtField" value="Project Name">
 <div class="block">
     <div class="objectHolder"><p class="textSimple">Canvas size</p></div>
-<div class="objectHolder">
-    <p class="textSimple">Width</p>
-    <input type="number" min="1" max="1000" class="txtField smallInputField" value="1">
-    <p class="textSimple">Heigh</p>
-    <input type="number" min="1" max="1000" class="txtField smallInputField" value="1">
-</div>
+    <div class="objectHolder">
+        <p class="textSimple">Width</p>
+        <input type="number" min="1" max="1000" class="txtField smallInputField" 
+            [formControl]="$any(dimensionsForm.get('width'))"
+            (blur)="onFieldSizeUpdate()"
+            (keydown.enter)="onFieldSizeUpdate()"
+           >
+        <p class="textSimple">Heigh</p>
+        <input type="number" min="1" max="1000" class="txtField smallInputField" 
+            [formControl]="$any(dimensionsForm.get('height'))"
+            (blur)="onFieldSizeUpdate()"
+            (keydown.enter)="onFieldSizeUpdate()"
+           >
+    </div>
 </div>
 
 <div class="objectHolder">
     <p class="textSimple">Auto Cross Placement</p>
     <label class="switch ">
-        <input type="checkbox">
+        <input type="checkbox" [checked]="isDrawCrossChecked" (change)="onDrawCrossChange($event)">
         <span class="slider round"></span>
     </label>
 </div>
