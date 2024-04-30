@@ -20,6 +20,7 @@ export class GridService {
   constructor(private eventService: EventListenerService) {
     this.app = new Application; 
     this.field = new Field(this.app);
+    this.lastClickedSquare = this.field.getSquareData({x: 0, y: 0})
   }
   async init() {
     await Square.loadTextures();
@@ -76,8 +77,6 @@ export class GridService {
     this.field.changeSquareSize(-Math.sign(event.deltaY), pos);
   }
   handleGridKeyboard(event: KeyboardEvent) {
-    console.log(event);
-    
     if (event.ctrlKey && event.shiftKey && event.key === 'Escape') {
       this.field.clear();
     }
@@ -110,6 +109,12 @@ export class GridService {
         case EventType.ChangeFieldSize:
           this.field.changeFieldSize({X: event.payload.width, Y: event.payload.height});
           break;
+        case EventType.OpenFile:
+          this.field.loadFile(event.payload.file);
+          break;
+        case EventType.SaveFile:
+          this.field.saveFile(event.payload.fileName);
+          break;
       }
     });
     
@@ -121,7 +126,6 @@ export class GridService {
     this.eventService.isRowChanged$.subscribe(row => {
       Field.startRow = row;
       this.field.updateGrid();
-      console.log(row);
     });
 
     setInterval(() => {

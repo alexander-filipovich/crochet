@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
 import { EventType } from '../events/event-listener.model';
 import { EventListenerService } from '../events/event-listener.service';
-import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-menu',
   standalone: true,
-  imports: [ ReactiveFormsModule ],
+  imports: [ ReactiveFormsModule, FormsModule ],
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.scss'
 })
@@ -14,6 +14,7 @@ export class MenuComponent {
   dimensionsForm: FormGroup;
   isDrawCrossChecked: boolean = false;
   startRow: boolean = true;
+  projectName: string = '';
 
   constructor(private eventService: EventListenerService) {
     this.eventService.isDrawCrossChecked$.subscribe(value => {
@@ -30,7 +31,22 @@ export class MenuComponent {
     });
   }
 
+  openFile(event: Event) {
+    const target = event.target as HTMLInputElement;
+    if (!target.files) return;
+    const file = target.files[0];
+    this.eventService.emitEvent({ type: EventType.OpenFile, payload: {file: file} });
+    target.value = '';
+  }
+  openFileChooser() {
+    const fileInput = document.getElementById('input-file') as HTMLInputElement;
+    fileInput.click();
+  }
 
+  downloadData() {
+    const name = this.projectName ? this.projectName : 'data';
+    this.eventService.emitEvent({ type: EventType.SaveFile, payload: {fileName: `${name}.json`} });
+  }
 
   clearField() {
     this.eventService.emitEvent({ type: EventType.ClearField, payload: null });

@@ -1,4 +1,5 @@
 import { config } from '../../config';
+import { ParserService } from '../parser/parser.service';
 import { Application, Assets, Graphics, Sprite, Texture } from 'pixi.js';
 
 export enum zIndexes {
@@ -244,6 +245,37 @@ export class Field {
     }
     init() {}
 
+    async loadFile(file: File) {
+        if (file.type == 'application/json') {
+            const data = await ParserService.parseJson(file);
+            const size: GridSize = {X: data.length, Y: data[0].length};
+            this.fieldSize = size;
+            this.fieldData = data;
+        }
+        else if (file.type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+            const data = await ParserService.parseExcel(file);
+            const size: GridSize = {X: data[0].length, Y: data.length};
+            const fieldData = Array.from({ length: size.X }, () => Array.from({ length: size.Y }, () => SquareState.empty));
+            for (let x = 0; x < size.X; x++) {
+                for (let y = 0; y < size.Y; y++) {
+                    fieldData[x][y] = data[size.Y-y-1][size.X-x-1];
+                }
+            }
+            this.fieldSize = size;
+            this.fieldData = fieldData;
+        }
+        this.updateGrid();
+    }
+    async saveFile(fileName: string) {
+        const data = this.fieldData;
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
     changeFieldSize(size: GridSize) {
         const fieldData = Array.from({ length: size.X }, () => Array.from({ length: size.Y }, () => SquareState.empty));
         for (let x = 0; x < Math.min(size.X, this.fieldSize.X); x++) {
@@ -371,7 +403,7 @@ export class Field {
         const crossState = (this.getSquareState(position) != undefined
             && this.getSquareState(position) == this.getSquareState({x: position.x, y: position.y+1})
             && this.getSquareState(position) == this.getSquareState({x: position.x, y: position.y+2})
-            && (this.getSquareState(position)+position.y+Field.startRow) % 2 == 0
+            && (this.getSquareState(position)+(this.fieldSize.Y-position.y)+Field.startRow) % 2 == 0
             && this.drawCrosses
             ) ? true : false;
         sq.setStateAndPosition(sqState, crossState, position);
