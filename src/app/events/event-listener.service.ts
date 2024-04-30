@@ -12,6 +12,9 @@ export class EventListenerService {
   private drawCrossCheckbox = new BehaviorSubject<boolean>(false);
   isDrawCrossChecked$ = this.drawCrossCheckbox.asObservable();
 
+  private changeFirstRow = new BehaviorSubject<number>(0);
+  isRowChanged$ = this.changeFirstRow.asObservable();
+
   constructor() { }
   emitEvent(event: AppEvent) {
     this.eventSource.next(event);
@@ -19,5 +22,9 @@ export class EventListenerService {
   
   setDrawCrossCheckbox(isChecked: boolean) {
     this.drawCrossCheckbox.next(isChecked);
+  }
+
+  setRowNumber(rowNumber: number) {
+    this.changeFirstRow.next(rowNumber);
   }
 }

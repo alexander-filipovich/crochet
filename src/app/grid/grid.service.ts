@@ -23,7 +23,7 @@ export class GridService {
   }
   async init() {
     await Square.loadTextures();
-    await Cross.loadTexture();
+    await Cross.loadTextures();
     await ScrollBar.loadTexture(); 
     this.field.init()
     Object.entries(this.scrollbars).forEach(([key, scrollbar]) => {
@@ -108,6 +108,12 @@ export class GridService {
     this.eventService.isDrawCrossChecked$.subscribe(checked => {
       this.field.drawCrosses = checked;
       this.field.updateGrid();
+    });
+
+    this.eventService.isRowChanged$.subscribe(row => {
+      Field.startRow = row;
+      this.field.updateGrid();
+      console.log(row);
     });
 
     setInterval(() => {

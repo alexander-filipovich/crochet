@@ -33,21 +33,25 @@ function getBetween(val: number, min: number, max: number) {
 }
 
 export class Cross {
-    static texture: Texture;
+    static textures = {
+        backgroundCross: new Texture(),
+        primaryCross: new Texture(),
+    } ;
     sprite: Sprite;
     cleared: boolean = true;
 
     constructor() {
-        if (!Cross.texture) {
+        if (!Cross.textures) {
             throw new Error("Texture not loaded");
         }
-        this.sprite = new Sprite(Cross.texture);
+        this.sprite = new Sprite(Cross.textures.backgroundCross);
         this.sprite.anchor.set(0.5)
-        this.sprite.zIndex = 100; //zIndexes.cross;
+        this.sprite.zIndex = zIndexes.cross;
         this.sprite.visible = false;
     }
-    static async loadTexture(texture = 'assets/images/cross/CrossMainColor.svg') {
-        Cross.texture = await Assets.load(texture);
+    static async loadTextures() {
+        Cross.textures.primaryCross = await Assets.load('assets/images/cross/CrossMainColor.svg');
+        Cross.textures.backgroundCross = await Assets.load('assets/images/cross/CrossBGColor.svg');
     }
 }
 
@@ -55,6 +59,7 @@ export class Square {
     static textures = {
         empty: new Texture(),
         filled: new Texture(),
+        primaryRow: new Texture(),
     };
     static size: number = 40;
     static offset: Point = { x: 0.3, y: 0.3 };
@@ -66,6 +71,7 @@ export class Square {
     static crossScale: number = 0.5;
     cross: Cross = new Cross();
     crossState: boolean = false;
+    realPosition: Point = { x: 0, y: 0 };
 
     constructor() {
         this.sprite = new Sprite();
@@ -76,6 +82,7 @@ export class Square {
     static async loadTextures() {
         Square.textures.filled = await Assets.load('assets/images/square/FilledSquare.svg');
         Square.textures.empty = await Assets.load('assets/images/square/EmptySquare.svg');
+        Square.textures.primaryRow = await Assets.load('assets/images/square/PrimaryColorSquare.svg');
     }
     static setSize(size: number) {
         Square.size = size;
@@ -93,11 +100,27 @@ export class Square {
             this.drawCross()
         }
     }
+
+    setStateAndPosition(state: SquareState, crossState: boolean = false, realPosition: Point) {
+        if (this.realPosition != realPosition || this.state != state || this.cleared) {
+            this.state = state;
+            this.realPosition = realPosition;
+            this.draw()
+        }
+        if (this.crossState != crossState || this.cleared) {
+            this.crossState = crossState;
+            this.drawCross()
+        }
+    }
+
     draw() {
         if (this.state == SquareState.filled) 
             this.sprite.texture = Square.textures.filled;
-        else 
+        else if((this.realPosition.y+Field.startRow) % 2 == 0)
             this.sprite.texture = Square.textures.empty;
+        else
+            this.sprite.texture = Square.textures.primaryRow;
+
         this.sprite.setSize(Square.size, Square.size);
         this.sprite.position.set(this.position.x*Square.size+Square.size*Square.offset.x, this.position.y*Square.size+Square.size*Square.offset.y);
         this.sprite.visible = true;
@@ -105,6 +128,11 @@ export class Square {
     }
     drawCross() {
         if (this.crossState) {
+            if(this.state == SquareState.filled)
+                this.cross.sprite.texture = Cross.textures.primaryCross;
+            else
+                this.cross.sprite.texture = Cross.textures.backgroundCross;
+
             this.cross.sprite.setSize(Square.size*Square.crossScale, Square.size*Square.crossScale);
             this.cross.sprite.position.set(this.sprite.position.x, this.sprite.position.y);
             this.cross.sprite.visible = true;
@@ -201,6 +229,8 @@ export class Field {
     fieldData: Array<Array<number>>;
     squares: Array<Array<Square>>;
     drawCrosses: boolean = false;
+    static startRow: number = 1;
+    static colorCheck: boolean = false;
     
     constructor(app: Application) {
         this.app = app;
@@ -329,7 +359,11 @@ export class Field {
         this.fieldData = Array.from({ length: this.fieldSize.X }, () => Array.from({ length: this.fieldSize.Y }, () => SquareState.empty));
         this.updateGrid();
     }
+
+
     updateCross(position: Point) {
+        //Field.colorCheck = this.getSquareState(position)+position.y+Field.startRow) % 2 == 0 ? true: false;
+
         if (this.getSquareState(position) == undefined)
             return
         const sq = this.squares[position.x-this.offset.x][position.y-this.offset.y];
@@ -337,10 +371,10 @@ export class Field {
         const crossState = (this.getSquareState(position) != undefined
             && this.getSquareState(position) == this.getSquareState({x: position.x, y: position.y+1})
             && this.getSquareState(position) == this.getSquareState({x: position.x, y: position.y+2})
-            && (this.getSquareState(position)+position.y+1) % 2 == 0
+            && (this.getSquareState(position)+position.y+Field.startRow) % 2 == 0
             && this.drawCrosses
             ) ? true : false;
-        sq.setState(sqState, crossState);
+        sq.setStateAndPosition(sqState, crossState, position);
     }
     updateSquare(position: Point, state?: SquareState) {
         if (this.getSquareState(position) == undefined)

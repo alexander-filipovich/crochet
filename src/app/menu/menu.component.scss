@@ -72,6 +72,10 @@
         background-color: #8B322C;
     }
 
+    button:disabled{
+      background-color: #d8e3e7;
+    }
+
     .textSimple {
         font-size: 14pt;
         color: #655421;

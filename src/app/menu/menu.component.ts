@@ -13,10 +13,15 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 export class MenuComponent {
   dimensionsForm: FormGroup;
   isDrawCrossChecked: boolean = false;
+  startRow: boolean = true;
 
   constructor(private eventService: EventListenerService) {
     this.eventService.isDrawCrossChecked$.subscribe(value => {
       this.isDrawCrossChecked = value;
+    });
+
+    this.eventService.isRowChanged$.subscribe(value => {
+      this.startRow = (value == 0);
     });
 
     this.dimensionsForm = new FormGroup({
@@ -24,6 +29,8 @@ export class MenuComponent {
       height: new FormControl(30)
     });
   }
+
+
 
   clearField() {
     this.eventService.emitEvent({ type: EventType.ClearField, payload: null });
@@ -35,6 +42,11 @@ export class MenuComponent {
   onDrawCrossChange(event: Event) {
     const isChecked = (event.target as HTMLInputElement).checked;
     this.eventService.setDrawCrossCheckbox(isChecked);
+  }
+
+  onFirstRowChanged(event: Event) {
+    const rowNumber = (event.target as HTMLInputElement).checked ? 0 : 1;
+    this.eventService.setRowNumber(rowNumber);
   }
 
   onFieldSizeUpdate() {

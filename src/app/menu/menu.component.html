@@ -15,8 +15,18 @@
             (keydown.enter)="onFieldSizeUpdate()"
            >
     </div>
+    <div class="objectHolder">
+        <button class="filled" style="align-self: center"><i></i>Update field</button>
+    </div>
 </div>
 
+<div class="objectHolder">
+    <p class="textSimple">Start with primary color</p>
+    <label class="switch ">
+        <input type="checkbox" [checked]="startRow" (change)="onFirstRowChanged($event)">
+        <span class="slider round"></span>
+    </label>
+</div>
 <div class="objectHolder">
     <p class="textSimple">Auto Cross Placement</p>
     <label class="switch ">
@@ -29,11 +39,12 @@
     <button class="filled" (click)="zoomChange(-1)"><i class="fa-solid fa-magnifying-glass-minus icons"></i>Zoom Out</button>
 </div>
 <div class="objectHolder">
-    <button class="filled"><i class="fa-solid fa-copy icons"></i>Copy</button>
-    <button class="filled"><i class="fa-solid fa-paste icons"></i>Paste</button>
-    <button class="filled"><i class="fa-solid fa-scissors icons"></i>Cut</button>
+    <button disabled class="filled"><i class="fa-solid fa-copy icons"></i>Copy</button>
+    <button disabled class="filled"><i class="fa-solid fa-paste icons"></i>Paste</button>
+    <button disabled class="filled"><i class="fa-solid fa-scissors icons"></i>Cut</button>
 </div>
 <div class="objectHolder">
     <button class="filled Huge Clear" (click)="clearField()"><i class="fa-solid fa-broom icons"></i>Clear field</button>
+    <button class="filled Huge"><i class="fa-solid fa-upload icons"></i>Open project</button>
     <button class="filled Huge"><i class="fa-solid fa-floppy-disk icons"></i>Save</button>
 </div>
