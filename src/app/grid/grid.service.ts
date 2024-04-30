@@ -76,8 +76,16 @@ export class GridService {
     this.field.changeSquareSize(-Math.sign(event.deltaY), pos);
   }
   handleGridKeyboard(event: KeyboardEvent) {
+    console.log(event);
+    
     if (event.ctrlKey && event.shiftKey && event.key === 'Escape') {
       this.field.clear();
+    }
+    if (event.key === '-'){
+      this.field.changeSquareSize(-5, {x: 0, y: 0});
+    }
+    if (event.key === '='){
+      this.field.changeSquareSize(5, {x: 0, y: 0});
     }
   }
 
