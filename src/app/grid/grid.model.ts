@@ -439,9 +439,9 @@ export class Field {
     getOffsetBorders() {
         return {
             left: -Math.floor(config.gridMaxOffsetPx.left/Square.size),
-            right: this.fieldSize.X-Math.floor(config.gridMaxOffsetPx.left/Square.size),
+            right: this.fieldSize.X-Math.floor((this.canvasSize.X-config.gridMaxOffsetPx.right)/Square.size),
             top: -Math.floor(config.gridMaxOffsetPx.top/Square.size),
-            bottom: this.fieldSize.Y-Math.floor(config.gridMaxOffsetPx.top/Square.size),
+            bottom: this.fieldSize.Y-Math.floor((this.canvasSize.Y-config.gridMaxOffsetPx.bottom)/Square.size),
         }
     }
     getOffsetPercent() {
