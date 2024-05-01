@@ -4,6 +4,7 @@ export enum EventType {
   ChangeFieldSize,
   OpenFile,
   SaveFile,
+  UpdateUI,
 }
 
 export interface AppEvent {

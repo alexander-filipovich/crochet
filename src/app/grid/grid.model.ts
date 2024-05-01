@@ -1,4 +1,6 @@
 import { config } from '../../config';
+import { EventType } from '../events/event-listener.model';
+import { EventListenerService } from '../events/event-listener.service';
 import { ParserService } from '../parser/parser.service';
 import { Application, Assets, Graphics, Sprite, Texture } from 'pixi.js';
 
@@ -220,6 +222,7 @@ export class ScrollBar {
 
 export class Field {
     app: Application;
+    eventService: EventListenerService;
 
     fieldSize: GridSize = { X: 50, Y: 30 };
 
@@ -233,8 +236,9 @@ export class Field {
     static startRow: number = 1;
     static colorCheck: boolean = false;
     
-    constructor(app: Application) {
+    constructor(app: Application, eventService: EventListenerService) {
         this.app = app;
+        this.eventService = eventService;
         const fieldSizeStored = localStorage.getItem('fieldSize');
         this.fieldSize = fieldSizeStored ? JSON.parse(fieldSizeStored) : this.fieldSize;
         const fieldDataStored = localStorage.getItem('fieldData');
@@ -242,8 +246,19 @@ export class Field {
             JSON.parse(fieldDataStored) : 
             Array.from({ length: this.fieldSize.X }, () => Array.from({ length: this.fieldSize.Y }, () => SquareState.empty));
         this.squares = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Square()));
+        this.sendUpdateMenuEvent();
     }
     init() {}
+
+    // External events
+    sendUpdateMenuEvent(filename?: string) {
+        const payload = {
+            fieldSize: this.fieldSize,
+            projectName: filename?.substr(0, filename.lastIndexOf(".")) ?? '',
+        }
+        this.eventService.emitEvent({ type: EventType.UpdateUI, payload: payload });
+    }
+
 
     async loadFile(file: File) {
         if (file.type == 'application/json') {
@@ -265,6 +280,7 @@ export class Field {
             this.fieldData = fieldData;
         }
         this.updateGrid();
+        this.sendUpdateMenuEvent(file.name);
     }
     async saveFile(fileName: string) {
         const data = this.fieldData;

@@ -17,18 +17,13 @@ export class MenuComponent {
   projectName: string = '';
 
   constructor(private eventService: EventListenerService) {
-    this.eventService.isDrawCrossChecked$.subscribe(value => {
-      this.isDrawCrossChecked = value;
-    });
-
-    this.eventService.isRowChanged$.subscribe(value => {
-      this.startRow = (value == 0);
-    });
-
     this.dimensionsForm = new FormGroup({
       width: new FormControl(50),
       height: new FormControl(30)
     });
+    const projectNameStored = localStorage.getItem('projectName');
+    this.projectName = projectNameStored ?? this.projectName;
+    this.setListeners();
   }
 
   openFile(event: Event) {
@@ -69,5 +64,31 @@ export class MenuComponent {
     const width = this.dimensionsForm.get('width')?.value;
     const height = this.dimensionsForm.get('height')?.value;
     this.eventService.emitEvent({ type: EventType.ChangeFieldSize, payload: {width: width, height: height} });
+  }
+
+  setListeners() {
+    this.eventService.isDrawCrossChecked$.subscribe(value => {
+      this.isDrawCrossChecked = value;
+    });
+
+    this.eventService.isRowChanged$.subscribe(value => {
+      this.startRow = (value == 0);
+    });
+    
+    this.eventService.events$.subscribe(event => {
+      switch (event.type) {
+        case EventType.UpdateUI:
+          this.dimensionsForm.setValue({
+            width: event.payload.fieldSize.X,
+            height: event.payload.fieldSize.Y,
+          });
+          if (event.payload.projectName)
+            this.projectName = event.payload.projectName;
+          break;
+      }
+    });
+    setInterval(() => {
+      localStorage.setItem('projectName', this.projectName);
+    }, 1000);
   }
 }

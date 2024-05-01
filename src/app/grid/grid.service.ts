@@ -19,7 +19,7 @@ export class GridService {
   
   constructor(private eventService: EventListenerService) {
     this.app = new Application; 
-    this.field = new Field(this.app);
+    this.field = new Field(this.app, this.eventService);
     this.lastClickedSquare = this.field.getSquareData({x: 0, y: 0})
   }
   async init() {
@@ -131,6 +131,6 @@ export class GridService {
     setInterval(() => {
       localStorage.setItem('fieldData', JSON.stringify(this.field.fieldData));
       localStorage.setItem('fieldSize', JSON.stringify(this.field.fieldSize));
-    }, 10000);
+    }, 1000);
   }
 }
