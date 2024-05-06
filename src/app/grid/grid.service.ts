@@ -125,7 +125,9 @@ export class GridService {
 
     this.eventService.isRowChanged$.subscribe(row => {
       Field.startRow = row;
+      this.field.clearGrid();
       this.field.updateGrid();
+      console.log(row);
     });
 
     setInterval(() => {

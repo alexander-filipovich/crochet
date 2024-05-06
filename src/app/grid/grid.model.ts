@@ -74,7 +74,7 @@ export class Square {
     static crossScale: number = 0.5;
     cross: Cross = new Cross();
     crossState: boolean = false;
-    realPosition: Point = { x: 0, y: 0 };
+    realPositionY: number = 0;
 
     constructor() {
         this.sprite = new Sprite();
@@ -104,10 +104,10 @@ export class Square {
         }
     }
 
-    setStateAndPosition(state: SquareState, crossState: boolean = false, realPosition: Point) {
-        if (this.realPosition != realPosition || this.state != state || this.cleared) {
+    setStateAndPosition(state: SquareState, crossState: boolean = false, realPositionY: number) {
+        if (this.realPositionY != realPositionY || this.state != state || this.cleared) {
             this.state = state;
-            this.realPosition = realPosition;
+            this.realPositionY = realPositionY;
             this.draw()
         }
         if (this.crossState != crossState || this.cleared) {
@@ -119,7 +119,7 @@ export class Square {
     draw() {
         if (this.state == SquareState.filled) 
             this.sprite.texture = Square.textures.filled;
-        else if((this.realPosition.y+Field.startRow) % 2 == 0)
+        else if((this.realPositionY+Field.startRow) % 2 == 0)
             this.sprite.texture = Square.textures.empty;
         else
             this.sprite.texture = Square.textures.primaryRow;
@@ -422,7 +422,7 @@ export class Field {
             && (this.getSquareState(position)+(this.fieldSize.Y-position.y)+Field.startRow) % 2 == 0
             && this.drawCrosses
             ) ? true : false;
-        sq.setStateAndPosition(sqState, crossState, position);
+        sq.setStateAndPosition(sqState, crossState, this.fieldSize.Y-position.y);
     }
     updateSquare(position: Point, state?: SquareState) {
         if (this.getSquareState(position) == undefined)
