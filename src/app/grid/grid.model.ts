@@ -268,12 +268,15 @@ export class Field {
             this.fieldData = data;
         }
         else if (file.type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
-            const data = await ParserService.parseExcel(file);
-            const size: GridSize = {X: data[0].length, Y: data.length};
+            const data = await ParserService.parseExcel(file);            
+            const size: GridSize = {
+                X: data.reduce((max, row) => Math.max(max, row.length), 0), 
+                Y: data.length
+            };
             const fieldData = Array.from({ length: size.X }, () => Array.from({ length: size.Y }, () => SquareState.empty));
             for (let x = 0; x < size.X; x++) {
                 for (let y = 0; y < size.Y; y++) {
-                    fieldData[x][y] = data[size.Y-y-1][size.X-x-1];
+                    fieldData[x][y] = data?.[size.Y-y-1]?.[size.X-x-1] ?? 0;
                 }
             }
             this.fieldSize = size;
