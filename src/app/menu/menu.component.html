@@ -33,9 +33,9 @@
     <button class="filled" (click)="zoomChange(-5)"><i class="fa-solid fa-magnifying-glass-minus icons"></i>Zoom Out</button>
 </div>
 <div class="objectHolder">
-    <button disabled class="filled"><i class="fa-solid fa-copy icons"></i>Copy</button>
-    <button disabled class="filled"><i class="fa-solid fa-paste icons"></i>Paste</button>
-    <button disabled class="filled"><i class="fa-solid fa-scissors icons"></i>Cut</button>
+    <button class="filled" (click)="copySelected()"><i class="fa-solid fa-copy icons"></i>Copy</button>
+    <button class="filled" (click)="pasteSelected()"><i class="fa-solid fa-paste icons"></i>Paste</button>
+    <button class="filled" (click)="cutSelected()"><i class="fa-solid fa-scissors icons"></i>Cut</button>
 </div>
 <div class="objectHolder">
     <button class="filled Huge Clear" (click)="clearField()"><i class="fa-solid fa-broom icons"></i>Clear field</button>

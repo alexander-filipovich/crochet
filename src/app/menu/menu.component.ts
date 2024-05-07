@@ -38,6 +38,17 @@ export class MenuComponent {
     fileInput.click();
   }
 
+  copySelected() {
+    this.eventService.emitEvent({ type: EventType.Copy, payload: null });
+  }  
+  pasteSelected() {
+    this.eventService.emitEvent({ type: EventType.Paste, payload: null });
+  }  
+  cutSelected() {
+    this.eventService.emitEvent({ type: EventType.Cut, payload: null });
+  }
+
+
   downloadData() {
     const name = this.projectName ? this.projectName : 'data';
     this.eventService.emitEvent({ type: EventType.SaveFile, payload: {fileName: `${name}.json`} });

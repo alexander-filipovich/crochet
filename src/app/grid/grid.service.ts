@@ -1,6 +1,7 @@
+import { config } from '../../config';
 import { Injectable } from '@angular/core';
 import { Application } from 'pixi.js';
-import { Cross, Field, Point, ScrollBar, Square, SquareState } from './grid.model';
+import { Cross, Field, FieldSelection, Point, ScrollBar, Square, SquareState } from './grid.model';
 import { EventType } from '../events/event-listener.model';
 import { EventListenerService } from '../events/event-listener.service';
 import { Subscription } from 'rxjs';
@@ -20,7 +21,7 @@ export class GridService {
   constructor(private eventService: EventListenerService) {
     this.app = new Application; 
     this.field = new Field(this.app, this.eventService);
-    this.lastClickedSquare = this.field.getSquareData({x: 0, y: 0})
+    this.lastClickedSquare = this.field.getSquareData({x: 0, y: 0});
   }
   async init() {
     await Square.loadTextures();
@@ -51,6 +52,9 @@ export class GridService {
     if (event.buttons === 1) {
       this.field.squareClick(pos);
     }
+    if (event.buttons === 2) {
+      this.field.updateSelection(pos, undefined);
+    }
     this.lastClickedSquare = this.field.getSquareData(pos);
   }
   handleGridMousemove(event: MouseEvent) {
@@ -65,6 +69,9 @@ export class GridService {
     else if (event.buttons === 1) {
       this.field.squareClick(pos, this.lastClickedSquare.state ?? SquareState.filled);
     }
+    if (event.buttons === 2) {
+      this.field.updateSelection(undefined, pos);
+    }
     else if (event.buttons === 4) {
       this.field.moveToPoint(pos, this.lastClickedSquare.position);
       Object.entries(this.scrollbars).forEach(([key, scrollbar]) => {
@@ -77,6 +84,7 @@ export class GridService {
     this.field.changeSquareSize(-Math.sign(event.deltaY), pos);
   }
   handleGridKeyboard(event: KeyboardEvent) {
+    //console.log(event.key);
     if (event.ctrlKey && event.shiftKey && event.key === 'Escape') {
       this.field.clear();
     }
@@ -85,6 +93,21 @@ export class GridService {
     }
     if (event.key === '='){
       this.field.changeSquareSize(5, {x: 0, y: 0});
+    }
+    if (event.ctrlKey && event.key === 'c') {
+      this.field.copySelected();
+    }
+    if (event.ctrlKey && event.key === 'v') {
+      this.field.pasteSelected();
+    }
+    if (event.ctrlKey && event.key === 'x') {
+      this.field.cutSelected();
+    }
+    if (event.key === 'Delete'){
+      this.field.clearSelected();
+    }
+    if (event.key === 'Escape'){
+      this.field.clearSelection();
     }
   }
 
@@ -115,6 +138,15 @@ export class GridService {
         case EventType.SaveFile:
           this.field.saveFile(event.payload.fileName);
           break;
+        case EventType.Copy:
+          this.field.copySelected();
+          break;
+        case EventType.Paste:
+          this.field.pasteSelected();
+          break;
+        case EventType.Cut:
+          this.field.cutSelected();
+          break;
       }
     });
     
@@ -127,12 +159,17 @@ export class GridService {
       Field.startRow = row;
       this.field.clearGrid();
       this.field.updateGrid();
-      console.log(row);
     });
+
+    
+    setInterval(() => {
+      this.resizeCanvas();
+    }, config.timeouts.autoUpdate);
 
     setInterval(() => {
       localStorage.setItem('fieldData', JSON.stringify(this.field.fieldData));
       localStorage.setItem('fieldSize', JSON.stringify(this.field.fieldSize));
-    }, 1000);
+    }, config.timeouts.autoSave);
+
   }
 }

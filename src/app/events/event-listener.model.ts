@@ -5,6 +5,9 @@ export enum EventType {
   OpenFile,
   SaveFile,
   UpdateUI,
+  Copy,
+  Paste,
+  Cut,
 }
 
 export interface AppEvent {

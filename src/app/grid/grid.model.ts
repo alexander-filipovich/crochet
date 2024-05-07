@@ -2,12 +2,13 @@ import { config } from '../../config';
 import { EventType } from '../events/event-listener.model';
 import { EventListenerService } from '../events/event-listener.service';
 import { ParserService } from '../parser/parser.service';
-import { Application, Assets, Graphics, Sprite, Texture } from 'pixi.js';
+import { Application, Assets, Container, Graphics, Sprite, Texture } from 'pixi.js';
 
 export enum zIndexes {
     background,
     square, 
     cross,
+    selection,
     scrollbarBG,
     scrollbar
 }
@@ -153,6 +154,75 @@ export class Square {
     }
 }
 
+export class FieldSelection {
+    overlay: Container;
+    selection: Graphics;
+    edges: {
+        start: Point,
+        end: Point,
+        } = {
+            start: {x: 0, y: 0},
+            end: {x: 0, y: 0},
+        };
+    fixedEdges: {
+        start: Point,
+        end: Point,
+        } = this.edges;
+    gridEdges: {
+        start: Point,
+        size: GridSize,
+        } = {
+            start: {x: 0, y: 0},
+            size: {X: 0, Y: 0},
+        };
+    data: Array<Array<number>> | undefined = undefined;
+    constructor() {
+        this.overlay = new Container();
+        this.overlay.zIndex = zIndexes.selection;
+        this.selection = new Graphics();
+        this.overlay.addChild(this.selection);
+        this.fixedEdges = this.edges;
+        this.update();
+    }
+    update() {
+        this.fixedEdges = {
+            start: {x: Math.min(this.edges.start.x, this.edges.end.x), y: Math.min(this.edges.start.y, this.edges.end.y)},
+            end: {x: Math.max(this.edges.start.x, this.edges.end.x), y: Math.max(this.edges.start.y, this.edges.end.y)},
+        };
+        this.gridEdges.start = {
+            x: this.fixedEdges.start.x-Field.offset.x-1,
+            y: this.fixedEdges.start.y-Field.offset.y-1,
+        };
+        this.gridEdges.size = {
+            X: this.fixedEdges.end.x-this.fixedEdges.start.x+1,
+            Y: this.fixedEdges.end.y-this.fixedEdges.start.y+1,
+        };
+    }
+    draw() {
+        this.update();
+        const fixedSize = this.gridEdges.size;
+        this.move();
+        this.selection.clear();
+        this.selection.rect(0, 0, fixedSize.X*Square.size, fixedSize.Y*Square.size);
+        this.selection.fill(config.selectionStyle);
+    }
+    move() {
+        this.update();
+        const fixedStart = this.gridEdges.start;
+        this.overlay.x = fixedStart.x*Square.size+Square.size*(Square.offset.x-0.5);
+        this.overlay.y = fixedStart.y*Square.size+Square.size*(Square.offset.y-0.5);
+    }
+    copy(data: Array<Array<number>>) {
+        this.data = data;
+    }
+    clear() {
+        this.data = undefined;
+        this.edges.start = {x: 0, y: 0};
+        this.edges.end = {x: 0, y: 0};
+        this.selection.clear();
+    }
+}
+
 export class ScrollBar {
     static dragTarget?: ScrollBar;
     static texture: Texture;
@@ -228,13 +298,15 @@ export class Field {
 
     canvasSize: GridSize = { X: 0, Y: 0 };
     gridSize: GridSize = { X: 0, Y: 0 };
-    offset: Point = { x: -2, y: -2 };
+    static offset: Point = { x: -2, y: -2 };
 
     fieldData: Array<Array<number>>;
     squares: Array<Array<Square>>;
     drawCrosses: boolean = false;
     static startRow: number = 1;
     static colorCheck: boolean = false;
+
+    selection: FieldSelection;
     
     constructor(app: Application, eventService: EventListenerService) {
         this.app = app;
@@ -246,6 +318,8 @@ export class Field {
             JSON.parse(fieldDataStored) : 
             Array.from({ length: this.fieldSize.X }, () => Array.from({ length: this.fieldSize.Y }, () => SquareState.empty));
         this.squares = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Square()));
+        this.selection = new FieldSelection();
+        this.app.stage.addChild(this.selection.overlay);
         this.sendUpdateMenuEvent();
     }
     init() {}
@@ -254,7 +328,7 @@ export class Field {
     sendUpdateMenuEvent(filename?: string) {
         const payload = {
             fieldSize: this.fieldSize,
-            projectName: filename?.substr(0, filename.lastIndexOf(".")) ?? '',
+            projectName: filename?.substring(0, filename.lastIndexOf(".")) ?? '',
         }
         this.eventService.emitEvent({ type: EventType.UpdateUI, payload: payload });
     }
@@ -313,13 +387,13 @@ export class Field {
             return
         // Prevent square offset from changes on field borders
         const offsetBorders = this.getOffsetBorders();
-        if (this.offset.x == offsetBorders.left)
+        if (Field.offset.x == offsetBorders.left)
             Square.offset.x = 0;
-        if (this.offset.x == offsetBorders.right)
+        if (Field.offset.x == offsetBorders.right)
             Square.offset.x = 1;
-        if (this.offset.y == offsetBorders.top)
+        if (Field.offset.y == offsetBorders.top)
             Square.offset.y = 0;
-        if (this.offset.y == offsetBorders.bottom)
+        if (Field.offset.y == offsetBorders.bottom)
             Square.offset.y = 1;
     }
     getScaledGridPosition(canvasPosition: Point) {
@@ -331,8 +405,8 @@ export class Field {
     getScaledFieldPosition(canvasPosition: Point) {
         const position: Point = this.getScaledGridPosition(canvasPosition);
         return {
-            x: Math.floor(position.x-Square.offset.x+0.5)+this.offset.x, 
-            y: Math.floor(position.y-Square.offset.y+0.5)+this.offset.y,
+            x: Math.floor(position.x-Square.offset.x+0.5)+Field.offset.x, 
+            y: Math.floor(position.y-Square.offset.y+0.5)+Field.offset.y,
         };
     }
     getSquareState(position: Point) {
@@ -392,8 +466,8 @@ export class Field {
             for (let y = 0; y < this.gridSize.Y; y++) {
                 const square = this.squares[x][y];
                 const pos = {
-                    x: x+this.offset.x,
-                    y: y+this.offset.y
+                    x: x+Field.offset.x,
+                    y: y+Field.offset.y
                 }
                 const state = this.getSquareState(pos);    
                 if (state == undefined) {
@@ -405,19 +479,73 @@ export class Field {
                 }
             }
         }
+        this.selection.draw();
     }
     clear() {
         this.fieldData = Array.from({ length: this.fieldSize.X }, () => Array.from({ length: this.fieldSize.Y }, () => SquareState.empty));
         this.updateGrid();
     }
 
+    updateSelection(startPosition?: Point, endPosition?: Point) {
+        if (startPosition) {
+            this.selection.edges.start = this.getSquareData(startPosition).position;
+            this.selection.edges.end = this.selection.edges.start;
+        }
+        if (endPosition) {
+            this.selection.edges.end = this.getSquareData(endPosition).position;
+        }
+        this.selection.draw();
+    }
+    clearSelection() {
+        this.selection.clear();
+    }
+    copySelected() {
+        const selectedData = Array.from({ length: this.selection.gridEdges.size.X }, 
+            () => Array.from({ length: this.selection.gridEdges.size.X }, 
+                () => SquareState.empty));
+        for (let x = this.selection.fixedEdges.start.x; x <= this.selection.fixedEdges.end.x; x++) {
+            for (let y = this.selection.fixedEdges.start.y; y <= this.selection.fixedEdges.end.y; y++) {
+                const pos = {x:x, y:y};
+                selectedData[x-this.selection.fixedEdges.start.x][y-this.selection.fixedEdges.start.y] = this.getSquareState(pos);
+            }
+        }
+        this.selection.copy(selectedData);
+    }
+    pasteSelected() {
+        const data = this.selection.data;
+        if (data === undefined)
+            return 
+        const startPosition = this.selection.fixedEdges.start;  
+        for (let x = 0; x < data.length; x++) {
+            for (let y = 0; y < data[0].length; y++) {
+                const pos = {x:startPosition.x+x, y:startPosition.y+y};
+                this.setSquareState(pos, data[x][y])
+            }
+        }
+        this.clearGrid();
+        this.updateGrid();
+    }
+    clearSelected() {
+        for (let x = this.selection.fixedEdges.start.x; x <= this.selection.fixedEdges.end.x; x++) {
+            for (let y = this.selection.fixedEdges.start.y; y <= this.selection.fixedEdges.end.y; y++) {
+                const pos = {x:x, y:y};
+                this.setSquareState(pos, SquareState.empty);
+            }
+        }
+        this.clearGrid();
+        this.updateGrid();
+    }
+    cutSelected() {
+        this.copySelected();
+        this.clearSelected();
+    }
 
     updateCross(position: Point) {
         //Field.colorCheck = this.getSquareState(position)+position.y+Field.startRow) % 2 == 0 ? true: false;
 
         if (this.getSquareState(position) == undefined)
             return
-        const sq = this.squares[position.x-this.offset.x][position.y-this.offset.y];
+        const sq = this.squares[position.x-Field.offset.x][position.y-Field.offset.y];
         const sqState = this.getSquareState(position);
         const crossState = (this.getSquareState(position) != undefined
             && this.getSquareState(position) == this.getSquareState({x: position.x, y: position.y+1})
@@ -450,18 +578,18 @@ export class Field {
     getOffsetPercent() {
         const offsetBorders = this.getOffsetBorders();
         return {
-            x: (this.offset.x - Square.offset.x - offsetBorders.left)/(offsetBorders.right - offsetBorders.left - 1),
-            y: (this.offset.y - Square.offset.y - offsetBorders.top)/(offsetBorders.bottom - offsetBorders.top - 1)
+            x: (Field.offset.x - Square.offset.x - offsetBorders.left)/(offsetBorders.right - offsetBorders.left - 1),
+            y: (Field.offset.y - Square.offset.y - offsetBorders.top)/(offsetBorders.bottom - offsetBorders.top - 1)
         }
     }
     fixOffset() {
         const offsetBorders = this.getOffsetBorders();
-        this.offset.x = getBetween(this.offset.x, offsetBorders.left, offsetBorders.right);
-        this.offset.y = getBetween(this.offset.y, offsetBorders.top, offsetBorders.bottom);
+        Field.offset.x = getBetween(Field.offset.x, offsetBorders.left, offsetBorders.right);
+        Field.offset.y = getBetween(Field.offset.y, offsetBorders.top, offsetBorders.bottom);
     }
     moveToPoint(canvasPosition: Point, squarePosition: Point) {
         const position: Point = this.getScaledGridPosition(canvasPosition); 
-        this.offset = { 
+        Field.offset = { 
             x: squarePosition.x - Math.floor(position.x), 
             y: squarePosition.y - Math.floor(position.y), 
         };
@@ -475,7 +603,7 @@ export class Field {
     }
     moveToPercent(percent: Point) {
         const offsetBorders = this.getOffsetBorders();
-        this.offset = {
+        Field.offset = {
             x: Math.floor(offsetBorders.left + percent.x * (offsetBorders.right  - offsetBorders.left - 1)),
             y: Math.floor(offsetBorders.top  + percent.y * (offsetBorders.bottom - offsetBorders.top  - 1)),
         };
@@ -486,6 +614,7 @@ export class Field {
         }); 
         this.clearGrid();
         this.updateGrid();
+        this.selection.move();
     }
 
     changeSquareSize(val: number, canvasPosition: Point) {
