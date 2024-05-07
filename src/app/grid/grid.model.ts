@@ -186,8 +186,8 @@ export class FieldSelection {
     }
     update() {
         this.fixedEdges = {
-            start: {x: Math.min(this.edges.start.x, this.edges.end.x), y: Math.min(this.edges.start.y, this.edges.end.y)},
-            end: {x: Math.max(this.edges.start.x, this.edges.end.x), y: Math.max(this.edges.start.y, this.edges.end.y)},
+            start: {x: Math.max(Math.min(this.edges.start.x, this.edges.end.x),0), y: Math.max(Math.min(this.edges.start.y, this.edges.end.y),0)},
+            end: {x: Math.min(Math.max(this.edges.start.x, this.edges.end.x),Field.fieldSize.X-1), y: Math.min(Math.max(this.edges.start.y, this.edges.end.y),Field.fieldSize.Y-1)},
         };
         this.gridEdges.start = {
             x: this.fixedEdges.start.x-Field.offset.x-1,
@@ -294,7 +294,7 @@ export class Field {
     app: Application;
     eventService: EventListenerService;
 
-    fieldSize: GridSize = { X: 50, Y: 30 };
+    static fieldSize: GridSize = { X: 50, Y: 30 };
 
     canvasSize: GridSize = { X: 0, Y: 0 };
     gridSize: GridSize = { X: 0, Y: 0 };
@@ -312,11 +312,11 @@ export class Field {
         this.app = app;
         this.eventService = eventService;
         const fieldSizeStored = localStorage.getItem('fieldSize');
-        this.fieldSize = fieldSizeStored ? JSON.parse(fieldSizeStored) : this.fieldSize;
+        Field.fieldSize = fieldSizeStored ? JSON.parse(fieldSizeStored) : Field.fieldSize;
         const fieldDataStored = localStorage.getItem('fieldData');
         this.fieldData = fieldDataStored ? 
             JSON.parse(fieldDataStored) : 
-            Array.from({ length: this.fieldSize.X }, () => Array.from({ length: this.fieldSize.Y }, () => SquareState.empty));
+            Array.from({ length: Field.fieldSize.X }, () => Array.from({ length: Field.fieldSize.Y }, () => SquareState.empty));
         this.squares = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Square()));
         this.selection = new FieldSelection();
         this.app.stage.addChild(this.selection.overlay);
@@ -327,7 +327,7 @@ export class Field {
     // External events
     sendUpdateMenuEvent(filename?: string) {
         const payload = {
-            fieldSize: this.fieldSize,
+            fieldSize: Field.fieldSize,
             projectName: filename?.substring(0, filename.lastIndexOf(".")) ?? '',
         }
         this.eventService.emitEvent({ type: EventType.UpdateUI, payload: payload });
@@ -338,7 +338,7 @@ export class Field {
         if (file.type == 'application/json') {
             const data = await ParserService.parseJson(file);
             const size: GridSize = {X: data.length, Y: data[0].length};
-            this.fieldSize = size;
+            Field.fieldSize = size;
             this.fieldData = data;
         }
         else if (file.type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
@@ -353,7 +353,7 @@ export class Field {
                     fieldData[x][y] = data?.[size.Y-y-1]?.[size.X-x-1] ?? 0;
                 }
             }
-            this.fieldSize = size;
+            Field.fieldSize = size;
             this.fieldData = fieldData;
         }
         this.updateGrid();
@@ -371,12 +371,12 @@ export class Field {
     }
     changeFieldSize(size: GridSize) {
         const fieldData = Array.from({ length: size.X }, () => Array.from({ length: size.Y }, () => SquareState.empty));
-        for (let x = 0; x < Math.min(size.X, this.fieldSize.X); x++) {
-            for (let y = 0; y < Math.min(size.Y, this.fieldSize.Y); y++) {
+        for (let x = 0; x < Math.min(size.X, Field.fieldSize.X); x++) {
+            for (let y = 0; y < Math.min(size.Y, Field.fieldSize.Y); y++) {
                 fieldData[x][y] = this.fieldData[x][y];
             }
         }
-        this.fieldSize = size;
+        Field.fieldSize = size;
         this.fieldData = fieldData;
         this.updateGrid();
     }
@@ -412,14 +412,14 @@ export class Field {
     getSquareState(position: Point) {
         // return this.fieldData[position.x]?.[position.y] ?? null;
         // mirrored state
-        return this.fieldData[this.fieldSize.X-position.x-1]?.[this.fieldSize.Y-position.y-1] ?? null
+        return this.fieldData[Field.fieldSize.X-position.x-1]?.[Field.fieldSize.Y-position.y-1] ?? null
     }
     setSquareState(position: Point, state: SquareState) {
         if (this.getSquareState(position) == undefined) 
             return;
         // this.fieldData[position.x][position.y] = state;
         // mirrored state
-        this.fieldData[this.fieldSize.X-position.x-1][this.fieldSize.Y-position.y-1] = state;
+        this.fieldData[Field.fieldSize.X-position.x-1][Field.fieldSize.Y-position.y-1] = state;
     }
     getSquareData(canvasPosition: Point) {
         const position: Point = this.getScaledFieldPosition(canvasPosition);
@@ -482,7 +482,7 @@ export class Field {
         this.selection.draw();
     }
     clear() {
-        this.fieldData = Array.from({ length: this.fieldSize.X }, () => Array.from({ length: this.fieldSize.Y }, () => SquareState.empty));
+        this.fieldData = Array.from({ length: Field.fieldSize.X }, () => Array.from({ length: Field.fieldSize.Y }, () => SquareState.empty));
         this.updateGrid();
     }
 
@@ -550,10 +550,10 @@ export class Field {
         const crossState = (this.getSquareState(position) != undefined
             && this.getSquareState(position) == this.getSquareState({x: position.x, y: position.y+1})
             && this.getSquareState(position) == this.getSquareState({x: position.x, y: position.y+2})
-            && (this.getSquareState(position)+(this.fieldSize.Y-position.y)+Field.startRow) % 2 == 0
+            && (this.getSquareState(position)+(Field.fieldSize.Y-position.y)+Field.startRow) % 2 == 0
             && this.drawCrosses
             ) ? true : false;
-        sq.setStateAndPosition(sqState, crossState, this.fieldSize.Y-position.y);
+        sq.setStateAndPosition(sqState, crossState, Field.fieldSize.Y-position.y);
     }
     updateSquare(position: Point, state?: SquareState) {
         if (this.getSquareState(position) == undefined)
@@ -570,9 +570,9 @@ export class Field {
     getOffsetBorders() {
         return {
             left: -Math.floor(config.gridMaxOffsetPx.left/Square.size),
-            right: this.fieldSize.X-Math.floor((this.canvasSize.X-config.gridMaxOffsetPx.right)/Square.size),
+            right: Field.fieldSize.X-Math.floor((this.canvasSize.X-config.gridMaxOffsetPx.right)/Square.size),
             top: -Math.floor(config.gridMaxOffsetPx.top/Square.size),
-            bottom: this.fieldSize.Y-Math.floor((this.canvasSize.Y-config.gridMaxOffsetPx.bottom)/Square.size),
+            bottom: Field.fieldSize.Y-Math.floor((this.canvasSize.Y-config.gridMaxOffsetPx.bottom)/Square.size),
         }
     }
     getOffsetPercent() {

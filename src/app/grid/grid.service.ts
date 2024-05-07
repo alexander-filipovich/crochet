@@ -168,7 +168,7 @@ export class GridService {
 
     setInterval(() => {
       localStorage.setItem('fieldData', JSON.stringify(this.field.fieldData));
-      localStorage.setItem('fieldSize', JSON.stringify(this.field.fieldSize));
+      localStorage.setItem('fieldSize', JSON.stringify(Field.fieldSize));
     }, config.timeouts.autoSave);
 
   }
