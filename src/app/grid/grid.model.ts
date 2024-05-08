@@ -216,7 +216,7 @@ export class FieldSelection {
         this.data = data;
     }
     clear() {
-        this.data = undefined;
+        //this.data = undefined;
         this.edges.start = {x: 0, y: 0};
         this.edges.end = {x: 0, y: 0};
         this.selection.clear();
@@ -479,7 +479,7 @@ export class Field {
                 }
             }
         }
-        this.selection.draw();
+        this.selection.move();
     }
     clear() {
         this.fieldData = Array.from({ length: Field.fieldSize.X }, () => Array.from({ length: Field.fieldSize.Y }, () => SquareState.empty));
@@ -511,11 +511,11 @@ export class Field {
         }
         this.selection.copy(selectedData);
     }
-    pasteSelected() {
+    pasteSelected(startPosition: Point) {
         const data = this.selection.data;
         if (data === undefined)
             return 
-        const startPosition = this.selection.fixedEdges.start;  
+        //const startPosition = this.selection.fixedEdges.start;  
         for (let x = 0; x < data.length; x++) {
             for (let y = 0; y < data[0].length; y++) {
                 const pos = {x:startPosition.x+x, y:startPosition.y+y};

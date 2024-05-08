@@ -55,6 +55,9 @@ export class GridService {
     if (event.buttons === 2) {
       this.field.updateSelection(pos, undefined);
     }
+    else {
+      this.field.clearSelection();
+    }
     this.lastClickedSquare = this.field.getSquareData(pos);
   }
   handleGridMousemove(event: MouseEvent) {
@@ -98,7 +101,7 @@ export class GridService {
       this.field.copySelected();
     }
     if (event.ctrlKey && event.key === 'v') {
-      this.field.pasteSelected();
+      this.field.pasteSelected(this.lastClickedSquare.position);
     }
     if (event.ctrlKey && event.key === 'x') {
       this.field.cutSelected();
@@ -142,7 +145,7 @@ export class GridService {
           this.field.copySelected();
           break;
         case EventType.Paste:
-          this.field.pasteSelected();
+          this.field.pasteSelected(this.lastClickedSquare.position);
           break;
         case EventType.Cut:
           this.field.cutSelected();
