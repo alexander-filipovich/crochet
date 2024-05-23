@@ -2,6 +2,7 @@ import { config } from '../../config';
 import { EventType } from '../events/event-listener.model';
 import { EventListenerService } from '../events/event-listener.service';
 import { ParserService } from '../parser/parser.service';
+import { jsPDF } from "jspdf";
 import { Application, Assets, Container, Graphics, Sprite, Texture } from 'pixi.js';
 
 export enum zIndexes {
@@ -290,6 +291,76 @@ export class ScrollBar {
     }
 }
 
+export class FieldToPDF {
+    static async loadTexture(url: string): Promise<HTMLImageElement> {
+        const img = new Image();
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+    
+        return new Promise((resolve, reject) => {
+            if (!ctx) {
+                reject(new Error("Failed to get canvas context"));
+                return;
+            }
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                const imageDataUrl = canvas.toDataURL('image/png');  // Convert to PNG
+                const resultImage = new Image();
+                resultImage.src = imageDataUrl;
+                resultImage.onload = () => resolve(resultImage);
+                resultImage.onerror = reject;
+            };
+            img.onerror = reject;
+            img.src = url;
+        });
+    }
+    static async initializeTextures() {
+        const filledSquareImage = await this.loadTexture('assets/images/square/FilledSquare.svg');
+        const emptySquareImage = await this.loadTexture('assets/images/square/EmptySquare.svg');
+        const primaryColorSquareImage = await this.loadTexture('assets/images/square/PrimaryColorSquare.svg');
+    
+        return { filledSquareImage, emptySquareImage, primaryColorSquareImage };
+    }
+    static async exportPixelFieldToPDF(grid: number[][], segmentSize: { width: number; height: number }) {
+        const squareSize = 20;
+        const { filledSquareImage, emptySquareImage, primaryColorSquareImage } = await this.initializeTextures();
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'px',
+            format: [segmentSize.width * squareSize, segmentSize.height * squareSize] 
+        });
+    
+        // Generate PDF content by segments
+        const numHorizontalSegments = Math.ceil(grid[0].length / segmentSize.width);
+        const numVerticalSegments = Math.ceil(grid.length / segmentSize.height);        
+    
+        for (let v = 0; v < numVerticalSegments; v++) {
+            for (let h = 0; h < numHorizontalSegments; h++) {
+                if (h !== 0 || v !== 0) {
+                    pdf.addPage();
+                }
+    
+                const startX = h * segmentSize.width;
+                const startY = v * segmentSize.height;
+                const endX = Math.min(startX + segmentSize.width, grid[0].length);
+                const endY = Math.min(startY + segmentSize.height, grid.length);
+    
+                for (let y = startY; y < endY; y++) {
+                    for (let x = startX; x < endX; x++) {
+                        const square = grid[y][x];
+                        const imageToUse = square == 1 ? filledSquareImage : emptySquareImage;
+                        pdf.addImage(imageToUse, 'PNG', (x - startX) * squareSize, (y - startY) * squareSize, squareSize, squareSize);
+                    }
+                }
+            }
+        }
+    
+        pdf.save('output.pdf');
+    }
+}
+
 export class Field {
     app: Application;
     eventService: EventListenerService;
@@ -368,6 +439,9 @@ export class Field {
         a.download = fileName;
         a.click();
         window.URL.revokeObjectURL(url);
+    }
+    saveToPDF(fileName: string) {
+        FieldToPDF.exportPixelFieldToPDF(this.fieldData, { width: 25, height: 35 })
     }
     changeFieldSize(size: GridSize) {
         const fieldData = Array.from({ length: size.X }, () => Array.from({ length: size.Y }, () => SquareState.empty));

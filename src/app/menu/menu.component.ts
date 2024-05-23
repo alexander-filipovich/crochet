@@ -53,6 +53,10 @@ export class MenuComponent {
     const name = this.projectName ? this.projectName : 'data';
     this.eventService.emitEvent({ type: EventType.SaveFile, payload: {fileName: `${name}.json`} });
   }
+  saveToPDF() {
+    const name = this.projectName ? this.projectName : 'data';
+    this.eventService.emitEvent({ type: EventType.SaveToPDF, payload: {fileName: `${name}.pdf`} });
+  }
 
   clearField() {
     this.eventService.emitEvent({ type: EventType.ClearField, payload: null });
