@@ -11,14 +11,20 @@ const config = {
     },
     
     selectionStyle: {
-        color: 0xA0A0A0, 
+        color: 0x90EE90, 
         alpha: 0.3,
     },
 
     timeouts: {
         autoSave: 1000,
         autoUpdate: 1000,
-    }
+    },
+
+    PDF: {
+        pageSize: { width: 25, height: 35 },
+        squareSize: 60,
+        borderSize: 80,
+    },
 
 }
 export { config }

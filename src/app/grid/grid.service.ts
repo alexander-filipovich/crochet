@@ -51,12 +51,10 @@ export class GridService {
     
     if (event.buttons === 1) {
       this.field.squareClick(pos);
-    }
-    if (event.buttons === 2) {
-      this.field.updateSelection(pos, undefined);
-    }
-    else {
       this.field.clearSelection();
+    }
+    else if (event.buttons === 2) {
+      this.field.updateSelection(pos, undefined);
     }
     this.lastClickedSquare = this.field.getSquareData(pos);
   }

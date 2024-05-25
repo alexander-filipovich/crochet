@@ -325,9 +325,10 @@ export class FieldToPDF {
             }
         }
     }
-    static async exportPixelFieldToPDF(field: Field, grid: number[][], segmentSize: { width: number; height: number }, fileName: string) {
-        const squareSize = 60;
-        const borderSize = 80;
+    static async exportPixelFieldToPDF(field: Field, fileName: string) {
+        const segmentSize = config.PDF.pageSize;
+        const squareSize = config.PDF.squareSize;
+        const borderSize = config.PDF.borderSize;
         const { filledSquareImage, emptySquareImage, primaryColorSquareImage, primaryCrossImage, backgroundCrossImage } = await this.initializeTextures();
         const pdf = new jsPDF({
             orientation: 'portrait',
@@ -470,7 +471,7 @@ export class Field {
         window.URL.revokeObjectURL(url);
     }
     saveToPDF(fileName: string) {
-        FieldToPDF.exportPixelFieldToPDF(this, this.fieldData, { width: 25, height: 35 }, fileName)
+        FieldToPDF.exportPixelFieldToPDF(this, fileName)
     }
     changeFieldSize(size: GridSize) {
         const fieldData = Array.from({ length: size.X }, () => Array.from({ length: size.Y }, () => SquareState.empty));
@@ -728,5 +729,6 @@ export class Field {
         this.updateSize();
         this.clearGrid();
         this.moveToPoint(canvasPosition, squarePosition);
+        this.updateSelection();
     }
 }
