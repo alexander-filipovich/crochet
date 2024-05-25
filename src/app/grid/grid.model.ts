@@ -121,7 +121,7 @@ export class Square {
     draw() {
         if (this.state == SquareState.filled) 
             this.sprite.texture = Square.textures.filled;
-        else if((this.realPositionY+Field.startRow) % 2 == 0)
+        else if ((this.realPositionY+Field.startRow) % 2 == 0)
             this.sprite.texture = Square.textures.empty;
         else
             this.sprite.texture = Square.textures.primaryRow;
@@ -293,25 +293,9 @@ export class ScrollBar {
 
 export class FieldToPDF {
     static async loadTexture(url: string): Promise<HTMLImageElement> {
-        const img = new Image();
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-    
         return new Promise((resolve, reject) => {
-            if (!ctx) {
-                reject(new Error("Failed to get canvas context"));
-                return;
-            }
-            img.onload = () => {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-                const imageDataUrl = canvas.toDataURL('image/png');  // Convert to PNG
-                const resultImage = new Image();
-                resultImage.src = imageDataUrl;
-                resultImage.onload = () => resolve(resultImage);
-                resultImage.onerror = reject;
-            };
+            const img = new Image();
+            img.onload = () => resolve(img);
             img.onerror = reject;
             img.src = url;
         });
@@ -320,21 +304,49 @@ export class FieldToPDF {
         const filledSquareImage = await this.loadTexture('assets/images/square/FilledSquare.svg');
         const emptySquareImage = await this.loadTexture('assets/images/square/EmptySquare.svg');
         const primaryColorSquareImage = await this.loadTexture('assets/images/square/PrimaryColorSquare.svg');
+        const primaryCrossImage = await this.loadTexture('assets/images/cross/CrossMainColor.svg');
+        const backgroundCrossImage = await this.loadTexture('assets/images/cross/CrossBGColor.svg');
     
-        return { filledSquareImage, emptySquareImage, primaryColorSquareImage };
+        return { filledSquareImage, emptySquareImage, primaryColorSquareImage, primaryCrossImage, backgroundCrossImage };
     }
-    static async exportPixelFieldToPDF(grid: number[][], segmentSize: { width: number; height: number }) {
-        const squareSize = 20;
-        const { filledSquareImage, emptySquareImage, primaryColorSquareImage } = await this.initializeTextures();
+
+    static addPagePositionIndicator(pdf: jsPDF, h: number, v: number, numHorizontalSegments: number, numVerticalSegments: number, size: number) {
+        const pageSize = pdf.internal.pageSize;
+        const rectSize = size / Math.max(numHorizontalSegments, numVerticalSegments); // Size of each small rectangle
+        const xOffset = pageSize.getWidth() - (numHorizontalSegments * rectSize) - size; // Start from the right margin
+        const yOffset = pageSize.getHeight() - (numVerticalSegments * rectSize) - size; // Bottom margin
+        pdf.setDrawColor(0); // Black border for all rectangles
+    
+        for (let row = 0; row < numVerticalSegments; row++) {
+            for (let col = 0; col < numHorizontalSegments; col++) {
+                const fillColor = (col === h && row === v) ? 'black' : 'white';
+                pdf.setFillColor(fillColor);
+                pdf.rect(xOffset + col * rectSize, yOffset + row * rectSize, rectSize, rectSize, 'FD');
+            }
+        }
+    }
+    static async exportPixelFieldToPDF(field: Field, grid: number[][], segmentSize: { width: number; height: number }) {
+        const squareSize = 60;
+        const borderSize = 80;
+        const { filledSquareImage, emptySquareImage, primaryColorSquareImage, primaryCrossImage, backgroundCrossImage } = await this.initializeTextures();
         const pdf = new jsPDF({
             orientation: 'portrait',
             unit: 'px',
-            format: [segmentSize.width * squareSize, segmentSize.height * squareSize] 
+            format: [segmentSize.width * squareSize + borderSize * 2, segmentSize.height * squareSize + borderSize * 3.5] 
         });
-    
+        
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            throw new Error('Canvas context is not available');
+        }
+
+        canvas.width = segmentSize.width * squareSize;
+        canvas.height = segmentSize.height * squareSize;
+
         // Generate PDF content by segments
-        const numHorizontalSegments = Math.ceil(grid[0].length / segmentSize.width);
-        const numVerticalSegments = Math.ceil(grid.length / segmentSize.height);        
+        const numHorizontalSegments = Math.ceil(Field.fieldSize.X / segmentSize.width);
+        const numVerticalSegments = Math.ceil(Field.fieldSize.Y / segmentSize.height); 
     
         for (let v = 0; v < numVerticalSegments; v++) {
             for (let h = 0; h < numHorizontalSegments; h++) {
@@ -344,16 +356,33 @@ export class FieldToPDF {
     
                 const startX = h * segmentSize.width;
                 const startY = v * segmentSize.height;
-                const endX = Math.min(startX + segmentSize.width, grid[0].length);
-                const endY = Math.min(startY + segmentSize.height, grid.length);
+                const endX = Math.min(startX + segmentSize.width, Field.fieldSize.X);
+                const endY = Math.min(startY + segmentSize.height, Field.fieldSize.Y);
     
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
                 for (let y = startY; y < endY; y++) {
                     for (let x = startX; x < endX; x++) {
-                        const square = grid[y][x];
-                        const imageToUse = square == 1 ? filledSquareImage : emptySquareImage;
-                        pdf.addImage(imageToUse, 'PNG', (x - startX) * squareSize, (y - startY) * squareSize, squareSize, squareSize);
+                        const squareState = field.getSquareState({x: x, y: y});
+                        const imageToUse = squareState === 1 ? filledSquareImage : 
+                            ((Field.fieldSize.Y-y+Field.startRow) % 2 == 0) ? 
+                            emptySquareImage : primaryColorSquareImage;
+                        ctx.drawImage(imageToUse, (x - startX) * squareSize, (y - startY) * squareSize, squareSize, squareSize);
+
+                        if (field.getCrossState({x: x, y: y}, true)) {
+                            const crossImageToUse = squareState === 1 ? primaryCrossImage : backgroundCrossImage;
+                            ctx.drawImage(crossImageToUse, 
+                                (x - startX) * squareSize + squareSize / 4, 
+                                (y - startY) * squareSize + squareSize / 4, 
+                                squareSize / 2, squareSize / 2);
+                        }
                     }
                 }
+
+                const imageData = canvas.toDataURL('image/jpeg');
+                pdf.addImage(imageData, 'JPEG', borderSize, borderSize, canvas.width, canvas.height);
+                this.addPagePositionIndicator(pdf, h, v, numHorizontalSegments, numVerticalSegments, borderSize);
             }
         }
     
@@ -441,7 +470,7 @@ export class Field {
         window.URL.revokeObjectURL(url);
     }
     saveToPDF(fileName: string) {
-        FieldToPDF.exportPixelFieldToPDF(this.fieldData, { width: 25, height: 35 })
+        FieldToPDF.exportPixelFieldToPDF(this, this.fieldData, { width: 25, height: 35 })
     }
     changeFieldSize(size: GridSize) {
         const fieldData = Array.from({ length: size.X }, () => Array.from({ length: size.Y }, () => SquareState.empty));
@@ -614,19 +643,20 @@ export class Field {
         this.clearSelected();
     }
 
+    getCrossState(position: Point, force: boolean = false) {
+        return (this.getSquareState(position) != undefined
+        && this.getSquareState(position) == this.getSquareState({x: position.x, y: position.y+1})
+        && this.getSquareState(position) == this.getSquareState({x: position.x, y: position.y+2})
+        && (this.getSquareState(position)+(Field.fieldSize.Y-position.y)+Field.startRow) % 2 == 0
+        && (this.drawCrosses || force)
+        ) ? true : false;
+    }
     updateCross(position: Point) {
-        //Field.colorCheck = this.getSquareState(position)+position.y+Field.startRow) % 2 == 0 ? true: false;
-
         if (this.getSquareState(position) == undefined)
             return
         const sq = this.squares[position.x-Field.offset.x][position.y-Field.offset.y];
         const sqState = this.getSquareState(position);
-        const crossState = (this.getSquareState(position) != undefined
-            && this.getSquareState(position) == this.getSquareState({x: position.x, y: position.y+1})
-            && this.getSquareState(position) == this.getSquareState({x: position.x, y: position.y+2})
-            && (this.getSquareState(position)+(Field.fieldSize.Y-position.y)+Field.startRow) % 2 == 0
-            && this.drawCrosses
-            ) ? true : false;
+        const crossState = this.getCrossState(position);
         sq.setStateAndPosition(sqState, crossState, Field.fieldSize.Y-position.y);
     }
     updateSquare(position: Point, state?: SquareState) {
