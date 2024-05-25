@@ -325,7 +325,7 @@ export class FieldToPDF {
             }
         }
     }
-    static async exportPixelFieldToPDF(field: Field, grid: number[][], segmentSize: { width: number; height: number }) {
+    static async exportPixelFieldToPDF(field: Field, grid: number[][], segmentSize: { width: number; height: number }, fileName: string) {
         const squareSize = 60;
         const borderSize = 80;
         const { filledSquareImage, emptySquareImage, primaryColorSquareImage, primaryCrossImage, backgroundCrossImage } = await this.initializeTextures();
@@ -386,7 +386,7 @@ export class FieldToPDF {
             }
         }
     
-        pdf.save('output.pdf');
+        pdf.save(fileName);
     }
 }
 
@@ -470,7 +470,7 @@ export class Field {
         window.URL.revokeObjectURL(url);
     }
     saveToPDF(fileName: string) {
-        FieldToPDF.exportPixelFieldToPDF(this, this.fieldData, { width: 25, height: 35 })
+        FieldToPDF.exportPixelFieldToPDF(this, this.fieldData, { width: 25, height: 35 }, fileName)
     }
     changeFieldSize(size: GridSize) {
         const fieldData = Array.from({ length: size.X }, () => Array.from({ length: size.Y }, () => SquareState.empty));
