@@ -162,7 +162,7 @@ export class FieldSelection {
         start: Point,
         end: Point,
         } = {
-            start: {x: 0, y: 0},
+            start: {x: -1, y: -1},
             end: {x: 0, y: 0},
         };
     fixedEdges: {
@@ -200,6 +200,8 @@ export class FieldSelection {
         };
     }
     draw() {
+        if (this.edges.start.x == -1) 
+            return
         this.update();
         const fixedSize = this.gridEdges.size;
         this.move();
@@ -218,7 +220,7 @@ export class FieldSelection {
     }
     clear() {
         //this.data = undefined;
-        this.edges.start = {x: 0, y: 0};
+        this.edges.start = {x: -1, y: -1};
         this.edges.end = {x: 0, y: 0};
         this.selection.clear();
     }
