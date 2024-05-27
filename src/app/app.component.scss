@@ -1,20 +1,57 @@
 :host {
-    app-grid {
-        float: right;
-        width: 82%;
-        height: 100%;
-        position: relative;
-        box-sizing: border-box;
+    display: flex; /* This sets the base display as flex to manage child layouts more consistently */
+    height: 100%; /* Ensures the host fills the entire height of its container */
+
+    .handler {
+        display: flex; /* Ensures flex properties are applied */
+        width: 100%; /* Takes full width to manage layout changes effectively */
+        transition: flex-direction 0.3s ease; /* Smooth transition for direction change */
     }
-    
-    app-menu {
-        width: 18%;
-        padding-top: 2%;
-        padding-bottom: 100%;
-        position: relative;
-        float: left;
-        display: flex; 
-        flex-direction: column;
-        background-color: #F1EEDC;
+
+    @media screen and (max-width: 1080px) {
+        .handler {
+            flex-direction: column-reverse; /* Changes layout to column */
+        }
+
+        app-grid {
+            width: 100%; /* Adjust to full width as it's now stacked */
+            height: 70%; /* Reducing height to give space to app-menu */
+            order: 2; /* Order can help in stacking properly if required */
+        }
+
+        app-menu {
+            background-color: #F1EEDC;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            width: 100%; /* Full width in a column layout */
+            height: 30%; /* Adjusted height to fill the remaining space */
+            overflow-y: auto; /* Enables scroll if content exceeds the height */
+        }
+
+    }
+
+    @media screen and (min-width: 1081px) {
+        .handler {
+            flex-direction: row-reverse; /* Default to row direction for wider screens */
+        }
+
+        app-grid {
+            float: right; /* Although float is used, consider using flex properties */
+            width: 85%;
+            height: 100%; /* Ensure this is the intended full height */
+            box-sizing: border-box; /* Include padding and border in width/height calculations */
+        }
+
+        app-menu {
+            float: left; /* Float might conflict with flex properties */
+            width: 15%;
+            background-color: #F1EEDC;
+            display: flex;
+            flex-direction: column;
+            padding-top: 2%;
+            height: calc(100% - 2%); /* Adjust height to factor in padding */
+            overflow-y: auto; /* Scroll enabled if content exceeds the height */
+        }
     }
 }

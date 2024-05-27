@@ -95,13 +95,16 @@ export class GridService {
     if (event.key === '='){
       this.field.changeSquareSize(5, {x: 0, y: 0});
     }
-    if (event.ctrlKey && event.key === 'c') {
+    if (event.ctrlKey && event.code ==='KeyC') {
       this.field.copySelected();
     }
-    if (event.ctrlKey && event.key === 'v') {
+    if (event.ctrlKey && !event.shiftKey && event.code === 'KeyV') {
       this.field.pasteSelected(this.lastClickedSquare.position);
     }
-    if (event.ctrlKey && event.key === 'x') {
+    if (event.ctrlKey && event.shiftKey && event.code === 'KeyV') {
+      this.field.pasteSelectedAdditive(this.lastClickedSquare.position);
+    }
+    if (event.ctrlKey && event.code === 'KeyX') {
       this.field.cutSelected();
     }
     if (event.key === 'Delete'){

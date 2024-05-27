@@ -312,13 +312,14 @@ export class FieldToPDF {
         return { filledSquareImage, emptySquareImage, primaryColorSquareImage, primaryCrossImage, backgroundCrossImage };
     }
 
-    static addPagePositionIndicator(pdf: jsPDF, h: number, v: number, numHorizontalSegments: number, numVerticalSegments: number, size: number) {
+    static addPageFooter(pdf: jsPDF, h: number, v: number, numHorizontalSegments: number, numVerticalSegments: number, size: number) {
         const pageSize = pdf.internal.pageSize;
         const rectSize = size / Math.max(numHorizontalSegments, numVerticalSegments); // Size of each small rectangle
         const xOffset = pageSize.getWidth() - (numHorizontalSegments * rectSize) - size; // Start from the right margin
         const yOffset = pageSize.getHeight() - (numVerticalSegments * rectSize) - size; // Bottom margin
         pdf.setDrawColor(0); // Black border for all rectangles
     
+        // Draw the grid indicating page position
         for (let row = 0; row < numVerticalSegments; row++) {
             for (let col = 0; col < numHorizontalSegments; col++) {
                 const fillColor = (col === h && row === v) ? 'black' : 'white';
@@ -326,7 +327,42 @@ export class FieldToPDF {
                 pdf.rect(xOffset + col * rectSize, yOffset + row * rectSize, rectSize, rectSize, 'FD');
             }
         }
+    
+        // Footer text setup
+        const fontSize = 45;
+        const fullText = "Mycrochet.live - free pattern creator for mosaic crochet schemes";
+        const linkText = "Mycrochet.live";
+        const otherText = " - free pattern creator for mosaic crochet schemes";
+    
+        pdf.setFontSize(fontSize); // Set font size
+        pdf.setFont("helvetica", 'normal'); // Ensuring we set the font without causing an error
+    
+        // Calculate the width of the text using scaleFactor
+        const textScale = fontSize / pdf.internal.scaleFactor;
+        const linkTextWidth = pdf.getStringUnitWidth(linkText) * textScale;
+        const fullTextWidth = pdf.getStringUnitWidth(fullText) * textScale;
+    
+        // Calculate the starting X coordinate to center the full text
+        const fullTextStartX = (pageSize.getWidth() - fullTextWidth) / 2;
+        const textY = pageSize.getHeight() - 100; // Adjusted to not overlap with the grid
+    
+        // Render the clickable part of the text
+        pdf.setTextColor(69, 98, 123); // Blue color for link
+        pdf.text(linkText, fullTextStartX, textY);
+        pdf.setDrawColor(69, 98, 123); // Blue underline
+        pdf.setLineWidth(0.5);
+        pdf.line(fullTextStartX, textY + 3, fullTextStartX + linkTextWidth, textY + 3);
+    
+        // Render the rest of the text
+        pdf.setTextColor(121, 156, 186); // Dark gray for the rest of the text
+        pdf.text(otherText, fullTextStartX + linkTextWidth, textY);
+    
+        // Link annotation
+        pdf.link(fullTextStartX, textY - 10, linkTextWidth, 10, { url: 'https://www.mycrochet.live' });
     }
+    
+    
+    
     static async exportPixelFieldToPDF(field: Field, fileName: string) {
         const segmentSize = config.PDF.pageSize;
         const squareSize = config.PDF.squareSize;
@@ -385,7 +421,7 @@ export class FieldToPDF {
 
                 const imageData = canvas.toDataURL('image/jpeg');
                 pdf.addImage(imageData, 'JPEG', borderSize, borderSize, canvas.width, canvas.height);
-                this.addPagePositionIndicator(pdf, h, v, numHorizontalSegments, numVerticalSegments, borderSize);
+                this.addPageFooter(pdf, h, v, numHorizontalSegments, numVerticalSegments, borderSize);
             }
         }
     
@@ -625,12 +661,30 @@ export class Field {
         for (let x = 0; x < data.length; x++) {
             for (let y = 0; y < data[0].length; y++) {
                 const pos = {x:startPosition.x+x, y:startPosition.y+y};
-                this.setSquareState(pos, data[x][y])
+                this.setSquareState(pos, data[x][y]);
             }
         }
         this.clearGrid();
         this.updateGrid();
     }
+
+    pasteSelectedAdditive(startPosition: Point) {
+        const data = this.selection.data;
+        if (data === undefined)
+            return 
+        //const startPosition = this.selection.fixedEdges.start;  
+        for (let x = 0; x < data.length; x++) {
+            for (let y = 0; y < data[0].length; y++) {
+                const pos = {x:startPosition.x+x, y:startPosition.y+y};
+                if (data[x][y] == 1) {
+                    this.setSquareState(pos, data[x][y]);
+                }
+            }
+        }
+        this.clearGrid();
+        this.updateGrid();
+    }
+
     clearSelected() {
         for (let x = this.selection.fixedEdges.start.x; x <= this.selection.fixedEdges.end.x; x++) {
             for (let y = this.selection.fixedEdges.start.y; y <= this.selection.fixedEdges.end.y; y++) {

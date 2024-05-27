@@ -1,37 +1,78 @@
 :host {
-    .block {
-        padding-bottom: 5%;
-        background-color: #e0dcc4;
-        margin: 4%;
-        border-radius: .2em;
-
-    }
-
-    .objectHolder {
-        display: flex; /* or inline-flex */
-        flex-direction: row;
-        justify-content: space-around;
-        margin-top: 3%;
-        margin-left: 5%;
-        margin-right: 5%;
-        flex-wrap: wrap;
-    }
+      
+  
+  $grid-breakpoints: (
+      xs: 0,
+      sm: 576px,
+      md: 768px,
+      lg: 992px,
+      xl: 1200px,
+      xxl: 1400px
+    );
 
     .txtField {
-        border-color:#B3C8CF;
-        padding-top: 10px;
-        padding-bottom: 10px;
-        width: 90%;
-        align-self: center;
-        font-size: 12pt;
-        font-style: italic;
-        color: #B3C8CF;
-        
+      border-color:#B3C8CF;
+      align-self: center;
+      font-size: 14pt;
+      font-style: italic;
+      color: #B3C8CF;
+      width: 90%;
+      margin-top: 2%;
+  }
+
+    @media screen and (max-width: 1080px) {
+      
+      .objectHolder{
+        flex-direction: row;
+      };
+      .smallInputField {
+        width: 80%;
     }
 
-    .smallInputField {
-        width: 15%;
+    button.Huge {
+      width: 20%;
+      margin-top: 3%;
     }
+    .textSimple {
+      font-size: 14pt;
+    }
+   }
+
+     @media screen and (min-width: 1081px) {
+     
+      .smallInputField {
+        width: 50%;
+    }
+
+      button.Huge {
+        width: 100%;
+        margin-top: 3%;
+    }
+
+    .textSimple {
+      font-size: 12pt;
+    }
+  } 
+
+  .textSimple {
+    color: #655421;
+    float: left;
+}
+    .block {
+        padding-bottom: 5%;
+        margin: 4%;
+        border-radius: .2em;
+        background-color: #ece5bb;
+    }
+    .objectHolder {
+      display: flex; /* or inline-flex */
+      //flex-direction: row;
+      justify-content: space-around;
+      margin-top: 1%;
+      margin-left: 5%;
+      margin-right: 5%;
+      flex-wrap: wrap;
+  }
 
     button.filled{
         flex-grow: 1;
@@ -45,10 +86,7 @@
         margin: 1%;
     }
 
-    button.Huge {
-        width: 100%;
-        margin-top: 3%;
-    }
+   
 
     button.Clear {
         background-color: #D37676;
@@ -76,13 +114,6 @@
       background-color: #d8e3e7;
     }
 
-    .textSimple {
-        font-size: 14pt;
-        color: #655421;
-        margin-top: 1%;
-        margin-bottom: 1%;
-        align-self: center;
-    }
 
     .icons {
         padding-right: 8px;
@@ -90,7 +121,7 @@
 
 
     //Slider 
-
+   
     .switch {
         position: relative;
         display: inline-block;
