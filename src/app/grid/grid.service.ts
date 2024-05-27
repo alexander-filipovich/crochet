@@ -17,6 +17,7 @@ export class GridService {
       v: new ScrollBar('v'),
   };
   lastClickedSquare: any;
+  actualSquare: any;
   
   constructor(private eventService: EventListenerService) {
     this.app = new Application; 
@@ -64,6 +65,8 @@ export class GridService {
   }
   handleGridMousemove(event: MouseEvent) {
     const pos = {x: event.offsetX, y: event.offsetY};
+    this.actualSquare = this.field.getSquareData(pos);  
+
     if (ScrollBar.dragTarget && event.buttons === 1) {
       ScrollBar.dragTarget.moveTo(pos, this.app.canvas);
       this.field.moveToPercent({
@@ -83,6 +86,12 @@ export class GridService {
           scrollbar.moveToPercent(this.field.getOffsetPercent(), this.app.canvas)
       });
     }
+    if (event.altKey && !event.shiftKey) {
+      this.field.drawSelected(this.actualSquare.position);
+    }
+    if (event.altKey && event.shiftKey) {
+      this.field.drawSelectedAdditive(this.actualSquare.position);
+    }
   }
   handleGridWheel(event: WheelEvent) {
     const pos = {x: event.offsetX, y: event.offsetY};
@@ -90,6 +99,9 @@ export class GridService {
   }
   handleGridKeyboard(event: KeyboardEvent) {
     //console.log(event.key);
+    if (event.key === "Alt") {
+      this.field.drawSelected(this.actualSquare.position);
+    }
     if (event.ctrlKey && event.shiftKey && event.key === 'Escape') {
       this.field.clear();
     }
@@ -101,24 +113,34 @@ export class GridService {
     }
     if (event.ctrlKey && event.code ==='KeyC') {
       this.field.copySelected();
+      this.field.clearSelection();
     }
     if (event.ctrlKey && !event.shiftKey && event.code === 'KeyV') {
-      this.field.pasteSelected(this.lastClickedSquare.position);
+      this.field.pasteSelected(this.actualSquare.position);
+      this.field.clearSelection();
     }
     if (event.ctrlKey && event.shiftKey && event.code === 'KeyV') {
-      this.field.pasteSelectedAdditive(this.lastClickedSquare.position);
+      this.field.pasteSelectedAdditive(this.actualSquare.position);
+      this.field.clearSelection();
     }
     if (event.ctrlKey && event.code === 'KeyX') {
       this.field.cutSelected();
+      this.field.clearSelection();
     }
     if (event.ctrlKey && event.code === 'KeyZ') {
       this.field.undo();
     }
     if (event.key === 'Delete'){
       this.field.clearSelected();
+      this.field.clearSelection();
     }
     if (event.key === 'Escape'){
       this.field.clearSelection();
+    }
+  }
+  handleGridKeyboardUp(event: KeyboardEvent) {
+    if (event.key === "Alt") {
+      this.field.updateGrid();
     }
   }
 
@@ -130,6 +152,7 @@ export class GridService {
     this.app.canvas.addEventListener('pointermove', this.handleGridMousemove.bind(this));
     this.app.canvas.addEventListener('wheel', this.handleGridWheel.bind(this), {'passive': true}); 
     window.addEventListener('keydown', this.handleGridKeyboard.bind(this));
+    window.addEventListener('keyup', this.handleGridKeyboardUp.bind(this));
     window.addEventListener('resize', this.resizeCanvas.bind(this));
 
     this.eventService.events$.subscribe(event => {

@@ -3,7 +3,7 @@ import { EventType } from '../events/event-listener.model';
 import { EventListenerService } from '../events/event-listener.service';
 import { ParserService } from '../parser/parser.service';
 import { jsPDF } from "jspdf";
-import { Application, Assets, Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { Application, Assets, ColorMatrixFilter, Container, Graphics, Sprite, Texture } from 'pixi.js';
 
 export enum zIndexes {
     background,
@@ -96,6 +96,7 @@ export class Square {
         this.position = { x: x, y: y };
     }
     setState(state: SquareState, crossState: boolean = false) {
+        this.sprite.filters = [];
         if (this.state != state || this.cleared) {
             this.state = state;
             this.draw()
@@ -104,6 +105,12 @@ export class Square {
             this.crossState = crossState;
             this.drawCross()
         }
+    }
+    setTemporaryState(state: SquareState) {
+        this.setState(state);
+        let colorMatrix = new ColorMatrixFilter();
+        this.sprite.filters = [colorMatrix];
+        colorMatrix.brightness(0.8, false);
     }
 
     setStateAndPosition(state: SquareState, crossState: boolean = false, realPositionY: number) {
@@ -673,11 +680,42 @@ export class Field {
         }
         this.selection.copy(selectedData);
     }
+    drawSelected(startPosition: Point) {
+        this.updateGrid();
+        const data = this.selection.data;
+        if (data === undefined)
+            return 
+        for (let x = 0; x < data.length; x++) {
+            for (let y = 0; y < data[0].length; y++) {
+                const pos = {x: startPosition.x+x, y: startPosition.y+y};
+                const sqPos = {x: pos.x-Field.offset.x, y:pos.y-Field.offset.x};
+                const square = this.squares[sqPos.x][sqPos.y];
+                if (this.getSquareState(pos) != undefined) {
+                    square.setTemporaryState(data[x][y]);
+                }
+            }
+        }
+    }
+    drawSelectedAdditive(startPosition: Point) {
+        this.updateGrid();
+        const data = this.selection.data;
+        if (data === undefined)
+            return 
+        for (let x = 0; x < data.length; x++) {
+            for (let y = 0; y < data[0].length; y++) {
+                const pos = {x: startPosition.x+x, y: startPosition.y+y};
+                const sqPos = {x: pos.x-Field.offset.x, y:pos.y-Field.offset.y};
+                const square = this.squares[sqPos.x][sqPos.y];
+                if (this.getSquareState(pos) != undefined && data[x][y] == 1) {
+                    square.setTemporaryState(data[x][y]);
+                }
+            }
+        }
+    }
     pasteSelected(startPosition: Point) {
         const data = this.selection.data;
         if (data === undefined)
             return 
-        //const startPosition = this.selection.fixedEdges.start;  
         for (let x = 0; x < data.length; x++) {
             for (let y = 0; y < data[0].length; y++) {
                 const pos = {x:startPosition.x+x, y:startPosition.y+y};
@@ -685,15 +723,12 @@ export class Field {
             }
         }
         this.updateHistory();
-        this.clearGrid();
         this.updateGrid();
     }
-
     pasteSelectedAdditive(startPosition: Point) {
         const data = this.selection.data;
         if (data === undefined)
             return 
-        //const startPosition = this.selection.fixedEdges.start;  
         for (let x = 0; x < data.length; x++) {
             for (let y = 0; y < data[0].length; y++) {
                 const pos = {x:startPosition.x+x, y:startPosition.y+y};
@@ -703,7 +738,6 @@ export class Field {
             }
         }
         this.updateHistory();
-        this.clearGrid();
         this.updateGrid();
     }
 
@@ -715,7 +749,6 @@ export class Field {
             }
         }
         this.updateHistory();
-        this.clearGrid();
         this.updateGrid();
     }
     cutSelected() {
