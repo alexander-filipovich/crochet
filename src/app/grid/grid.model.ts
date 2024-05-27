@@ -445,6 +445,8 @@ export class Field {
     static startRow: number = 1;
     static colorCheck: boolean = false;
 
+    history: any[] = [];
+
     selection: FieldSelection;
     
     constructor(app: Application, eventService: EventListenerService) {
@@ -460,6 +462,7 @@ export class Field {
         this.selection = new FieldSelection();
         this.app.stage.addChild(this.selection.overlay);
         this.sendUpdateMenuEvent();
+        this.updateHistory();
     }
     init() {}
 
@@ -511,6 +514,23 @@ export class Field {
     saveToPDF(fileName: string) {
         FieldToPDF.exportPixelFieldToPDF(this, fileName)
     }
+
+    updateHistory() {
+        if (this.history.length === config.history.maxSize) {
+            this.history.shift();
+        }
+        this.history.push(JSON.stringify(this.fieldData));
+    }
+    undo() {
+        if (this.history.length > 1) {
+            this.history.pop();
+            
+            this.fieldData = JSON.parse(this.history.at(-1))
+            this.clearGrid();
+            this.updateGrid();
+        }
+    }
+
     changeFieldSize(size: GridSize) {
         const fieldData = Array.from({ length: size.X }, () => Array.from({ length: size.Y }, () => SquareState.empty));
         for (let x = 0; x < Math.min(size.X, Field.fieldSize.X); x++) {
@@ -664,6 +684,7 @@ export class Field {
                 this.setSquareState(pos, data[x][y]);
             }
         }
+        this.updateHistory();
         this.clearGrid();
         this.updateGrid();
     }
@@ -681,6 +702,7 @@ export class Field {
                 }
             }
         }
+        this.updateHistory();
         this.clearGrid();
         this.updateGrid();
     }
@@ -692,6 +714,7 @@ export class Field {
                 this.setSquareState(pos, SquareState.empty);
             }
         }
+        this.updateHistory();
         this.clearGrid();
         this.updateGrid();
     }

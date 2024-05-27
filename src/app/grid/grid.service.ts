@@ -58,6 +58,10 @@ export class GridService {
     }
     this.lastClickedSquare = this.field.getSquareData(pos);
   }
+  handlePointerUp(event: MouseEvent) {
+    if (event.button == 0) 
+      this.field.updateHistory();    
+  }
   handleGridMousemove(event: MouseEvent) {
     const pos = {x: event.offsetX, y: event.offsetY};
     if (ScrollBar.dragTarget && event.buttons === 1) {
@@ -107,6 +111,9 @@ export class GridService {
     if (event.ctrlKey && event.code === 'KeyX') {
       this.field.cutSelected();
     }
+    if (event.ctrlKey && event.code === 'KeyZ') {
+      this.field.undo();
+    }
     if (event.key === 'Delete'){
       this.field.clearSelected();
     }
@@ -119,6 +126,7 @@ export class GridService {
   setListeners() {
     this.app.canvas.addEventListener('contextmenu', e => e.preventDefault());
     this.app.canvas.addEventListener('pointerdown', this.handleGridClick.bind(this));
+    this.app.canvas.addEventListener('pointerup', this.handlePointerUp.bind(this));
     this.app.canvas.addEventListener('pointermove', this.handleGridMousemove.bind(this));
     this.app.canvas.addEventListener('wheel', this.handleGridWheel.bind(this), {'passive': true}); 
     window.addEventListener('keydown', this.handleGridKeyboard.bind(this));

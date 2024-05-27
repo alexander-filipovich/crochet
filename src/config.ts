@@ -1,3 +1,5 @@
+import { buffer } from "rxjs"
+
 const config = { 
     gridMaxOffsetPx: {
         left: 200,
@@ -24,6 +26,10 @@ const config = {
         pageSize: { width: 25, height: 35 },
         squareSize: 60,
         borderSize: 80,
+    },
+
+    history: {
+        maxSize: 10,
     },
 
 }
