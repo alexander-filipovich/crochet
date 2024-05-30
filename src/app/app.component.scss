@@ -8,7 +8,7 @@
         transition: flex-direction 0.3s ease; /* Smooth transition for direction change */
     }
 
-    @media screen and (max-width: 1080px) {
+    @media screen and (max-width: 960px) {
         .handler {
             flex-direction: column-reverse; /* Changes layout to column */
         }
@@ -22,8 +22,10 @@
         app-menu {
             background-color: #F1EEDC;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+            flex-wrap: wrap;
             position: relative;
+            justify-content: space-around;
             width: 100%; /* Full width in a column layout */
             height: 30%; /* Adjusted height to fill the remaining space */
             overflow-y: auto; /* Enables scroll if content exceeds the height */
@@ -31,24 +33,25 @@
 
     }
 
-    @media screen and (min-width: 1081px) {
+    @media screen and (min-width: 961px) {
         .handler {
             flex-direction: row-reverse; /* Default to row direction for wider screens */
         }
 
         app-grid {
             float: right; /* Although float is used, consider using flex properties */
-            width: 85%;
+            width: 82%;
             height: 100%; /* Ensure this is the intended full height */
             box-sizing: border-box; /* Include padding and border in width/height calculations */
         }
 
         app-menu {
             float: left; /* Float might conflict with flex properties */
-            width: 15%;
+            width: 18%;
             background-color: #F1EEDC;
             display: flex;
             flex-direction: column;
+            align-items: stretch;
             padding-top: 2%;
             height: calc(100% - 2%); /* Adjust height to factor in padding */
             overflow-y: auto; /* Scroll enabled if content exceeds the height */

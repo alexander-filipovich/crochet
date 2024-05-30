@@ -1,50 +1,72 @@
 <input type="text" id="project-name" class="txtField" [(ngModel)]="projectName" placeholder="Project Name">
+
 <div class="block">
-    <div class="objectHolder"><p class="textSimple">Canvas size</p></div>
+    <div class="objectHolder"><p class="textBold">Canvas size</p></div>
     <div class="objectRowHolder">
-        <div class="objectHolder">
             <p class="textSimple">Width</p>
         <input type="number" min="1" max="1000" class="txtField smallInputField" 
             [formControl]="$any(dimensionsForm.get('width'))">
-        </div>
-        <div class="objectHolder">
-            <p class="textSimple">Heigh</p>
+    </div>
+    <div class="objectRowHolder">
+        <p class="textSimple">Heigh</p>
         <input type="number" min="1" max="1000" class="txtField smallInputField" 
             [formControl]="$any(dimensionsForm.get('height'))">
-        </div>
     </div>
     <div class="objectHolder">
         <button class="filled" style="align-self: center" (click)="onFieldSizeUpdate()"><i></i>Update field</button>
     </div>
 </div>
+<div class="block">
+    <div class="objectHolder"><p class="textBold">Canvas settings</p></div>
+    <div class="objectHolder">
+        <p class="textSimple">Start with primary color</p>
+        <label class="switch ">
+            <input type="checkbox" [checked]="startRow" (change)="onFirstRowChanged($event)">
+            <span class="slider round"></span>
+        </label>
+    </div>
+    <div class="objectHolder">
+        <p class="textSimple">Auto cross placement</p>
+        <label class="switch ">
+            <input type="checkbox" [checked]="isDrawCrossChecked" (change)="onDrawCrossChange($event)">
+            <span class="slider round"></span>
+        </label>
+    </div>
+    <div class="objectHolder">
+        <p class="textSimple">Show copied pattern</p>
+        <label class="switch ">
+            <input type="checkbox" >
+            <span class="slider round"></span>
+        </label>
+    </div>
+    <div class="objectHolder">
+        <p class="textSimple">Skip background cells</p>
+        <label class="switch ">
+            <input type="checkbox" >
+            <span class="slider round"></span>
+        </label>
+    </div>
+</div>
 
-<div class="objectHolder">
-    <p class="textSimple">Start with primary color</p>
-    <label class="switch ">
-        <input type="checkbox" [checked]="startRow" (change)="onFirstRowChanged($event)">
-        <span class="slider round"></span>
-    </label>
+<div class="block">
+    <div class="objectHolder">
+        <button class="filled" (click)="zoomChange(+5)"><i class="fa-solid fa-magnifying-glass-plus icons"></i>Zoom In</button>
+        <button class="filled" (click)="zoomChange(-5)"><i class="fa-solid fa-magnifying-glass-minus icons"></i>Zoom Out</button>
+    </div>
+    <div class="objectHolder">
+        <button class="filled" (click)="copySelected()"><i class="fa-solid fa-copy icons"></i>Copy</button>
+        <button class="filled" (click)="pasteSelected()"><i class="fa-solid fa-paste icons"></i>Paste</button>
+        <button class="filled" (click)="cutSelected()"><i class="fa-solid fa-scissors icons"></i>Cut</button>
+    </div>
 </div>
-<div class="objectHolder">
-    <p class="textSimple">Auto Cross Placement</p>
-    <label class="switch ">
-        <input type="checkbox" [checked]="isDrawCrossChecked" (change)="onDrawCrossChange($event)">
-        <span class="slider round"></span>
-    </label>
-</div>
-<div class="objectHolder">
-    <button class="filled" (click)="zoomChange(+5)"><i class="fa-solid fa-magnifying-glass-plus icons"></i>Zoom In</button>
-    <button class="filled" (click)="zoomChange(-5)"><i class="fa-solid fa-magnifying-glass-minus icons"></i>Zoom Out</button>
-</div>
-<div class="objectHolder">
-    <button class="filled" (click)="copySelected()"><i class="fa-solid fa-copy icons"></i>Copy</button>
-    <button class="filled" (click)="pasteSelected()"><i class="fa-solid fa-paste icons"></i>Paste</button>
-    <button class="filled" (click)="cutSelected()"><i class="fa-solid fa-scissors icons"></i>Cut</button>
-</div>
-<div class="objectHolder">
-    <button class="filled Huge Clear" (click)="clearField()"><i class="fa-solid fa-broom icons"></i>Clear field</button>
-    <input type="file" id="input-file" style="display: none;" (change)="openFile($event)">
-    <button class="filled Huge" (click)="openFileChooser()"><i class="fa-solid fa-upload icons"></i>Open project</button>
-    <button class="filled Huge" (click)="downloadData()"><i class="fa-solid fa-floppy-disk icons"></i>Save</button>
-    <button class="filled Huge" (click)="saveToPDF()"><i class="fa-solid fa-floppy-disk icons"></i>Save to PDF</button>
+<div class="block">
+    <div class="objectHolder">
+        <button class="filled Huge Clear" (click)="clearField()"><i class="fa-solid fa-broom icons"></i>Clear field</button>
+    </div>
+    <div class="objectHolder">
+        <input type="file" id="input-file" style="display: none;" (change)="openFile($event)">
+        <button class="filled Huge" (click)="openFileChooser()"><i class="fa-solid fa-upload icons"></i>Open project</button>
+        <button class="filled Huge" (click)="downloadData()"><i class="fa-solid fa-floppy-disk icons"></i>Save</button>
+        <button class="filled Huge" (click)="saveToPDF()"><i class="fa-solid fa-floppy-disk icons"></i>Save PDF</button>
+    </div>
 </div>

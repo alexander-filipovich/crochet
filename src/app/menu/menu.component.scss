@@ -10,23 +10,38 @@
       xxl: 1400px
     );
 
+    input{
+      align-self: center;
+    }
     .txtField {
       border-color:#B3C8CF;
       align-self: center;
       font-size: 14pt;
       font-style: italic;
       color: #B3C8CF;
+      padding-top: 2%;
+      padding-bottom: 2%;
       width: 90%;
-      margin-top: 2%;
   }
 
-    @media screen and (max-width: 1080px) {
+  .smallInputField{
+    margin-top: 5%;
+    margin-bottom: 5%;
+  }
+
+
+    @media screen and (max-width: 960px) {
       
       .objectHolder{
         flex-direction: row;
+        
+      justify-content: space-between;
       };
       .smallInputField {
-        width: 80%;
+        width: 50%;
+    }
+    .txtField{
+      margin-top: 2%;
     }
 
     button.Huge {
@@ -34,11 +49,20 @@
       margin-top: 3%;
     }
     .textSimple {
-      font-size: 14pt;
+      font-size: 11pt;
     }
+    .block {
+      padding-top: 2%;
+      padding-bottom: 2%;
+      margin-top: 2%;
+      border-radius: .2em;
+      background-color: #ece5bb;
+      flex-direction: column;
+      width: 48%;
+  }
    }
 
-     @media screen and (min-width: 1081px) {
+     @media (min-width: 961px) {
      
       .smallInputField {
         width: 50%;
@@ -46,33 +70,51 @@
 
       button.Huge {
         width: 100%;
-        margin-top: 3%;
+        //margin-top: 3%;
     }
 
     .textSimple {
       font-size: 12pt;
     }
+    .block {
+      padding-top: 2%;
+      padding-bottom: 2%;
+      margin-top: 2%;
+      border-radius: .2em;
+      background-color: #ece5bb;
+      flex-direction: column;
+      width: 100%;
+  }
+    
   } 
 
   .textSimple {
     color: #655421;
     float: left;
 }
-    .block {
-        padding-bottom: 5%;
-        margin: 4%;
-        border-radius: .2em;
-        background-color: #ece5bb;
-    }
+.textBold {
+  color: #655421;
+  float: left;
+  font-weight: bold;
+}
+
+   
     .objectHolder {
       display: flex; /* or inline-flex */
-      //flex-direction: row;
-      justify-content: space-around;
-      margin-top: 1%;
-      margin-left: 5%;
-      margin-right: 5%;
-      flex-wrap: wrap;
+      flex-direction: row;
+      justify-content: space-between;
+      margin-left: 2%;
+      margin-right: 2%;
   }
+
+  .objectRowHolder {
+    display: flex; /* or inline-flex */
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 1%;
+    margin-left: 5%;
+    margin-right: 5%;
+}
 
     button.filled{
         flex-grow: 1;
@@ -80,9 +122,9 @@
         color: #F1EEDC;
         background-color: #B3C8CF;
         border: none;
-        padding: 5%;
+        padding-top: 3%;
+        padding-bottom: 3%;
         border-radius: .4em;
-        justify-content: space-between;
         margin: 1%;
     }
 
@@ -119,14 +161,20 @@
         padding-right: 8px;
     }
 
+    p {
+      margin-top:  5%;
+      margin-bottom: 5%;
+      align-self: center;
+    }
 
     //Slider 
    
     .switch {
         position: relative;
         display: inline-block;
-        width: 60px;
-        height: 28px;
+        align-self: center;
+        width: 40px ;
+        height: 20px;
       }
       
       /* Hide default HTML checkbox */
@@ -152,10 +200,10 @@
       .slider:before {
         position: absolute;
         content: "";
-        height: 20px;
-        width: 20px;
-        left: 4px;
-        bottom: 4px;
+        height: 12px ;
+        width: 12px ;
+        left: 4px ;
+        bottom: 4px ;
         background-color: white;
         -webkit-transition: .4s;
         transition: .4s;
@@ -170,14 +218,14 @@
       }
       
       input:checked + .slider:before {
-        -webkit-transform: translateX(26px);
-        -ms-transform: translateX(26px);
-        transform: translateX(32px);
+        -webkit-transform: translateX(20px);
+        -ms-transform: translateX(26px  2);
+        transform: translateX(16px);
       }
       
       /* Rounded sliders */
       .slider.round {
-        border-radius: 34px;
+        border-radius: 34px ;
       }
       
       .slider.round:before {
