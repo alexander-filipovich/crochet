@@ -175,6 +175,7 @@
         align-self: center;
         width: 40px ;
         height: 20px;
+        margin-right: 2%;
       }
       
       /* Hide default HTML checkbox */
@@ -219,8 +220,8 @@
       
       input:checked + .slider:before {
         -webkit-transform: translateX(20px);
-        -ms-transform: translateX(26px  2);
-        transform: translateX(16px);
+        -ms-transform: translateX(26px);
+        transform: translateX(20px);
       }
       
       /* Rounded sliders */
