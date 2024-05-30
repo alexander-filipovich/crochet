@@ -110,7 +110,8 @@ export class Square {
         this.setState(state);
         let colorMatrix = new ColorMatrixFilter();
         this.sprite.filters = [colorMatrix];
-        colorMatrix.brightness(0.8, false);
+        //colorMatrix.brightness(0.8, false);
+        colorMatrix.tint(config.selectionStyle.previewColor, true);
     }
 
     setStateAndPosition(state: SquareState, crossState: boolean = false, realPositionY: number) {

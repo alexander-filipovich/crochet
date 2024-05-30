@@ -13,8 +13,9 @@ const config = {
     },
     
     selectionStyle: {
-        color: 0x90EE90, 
+        color: 0x1E90FF, 
         alpha: 0.3,
+        previewColor: 0x87CEFA,
     },
 
     timeouts: {
