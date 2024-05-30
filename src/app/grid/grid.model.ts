@@ -680,7 +680,7 @@ export class Field {
         }
         this.selection.copy(selectedData);
     }
-    drawSelected(startPosition: Point) {
+    drawSelected(startPosition: Point, additive: boolean = false) {
         this.updateGrid();
         const data = this.selection.data;
         if (data === undefined)
@@ -691,23 +691,9 @@ export class Field {
                 const sqPos = {x: pos.x-Field.offset.x, y:pos.y-Field.offset.y};
                 const square = this.squares[sqPos.x][sqPos.y];
                 if (this.getSquareState(pos) != undefined) {
-                    square.setTemporaryState(data[x][y]);
-                }
-            }
-        }
-    }
-    drawSelectedAdditive(startPosition: Point) {
-        this.updateGrid();
-        const data = this.selection.data;
-        if (data === undefined)
-            return 
-        for (let x = 0; x < data.length; x++) {
-            for (let y = 0; y < data[0].length; y++) {
-                const pos = {x: startPosition.x+x, y: startPosition.y+y};
-                const sqPos = {x: pos.x-Field.offset.x, y:pos.y-Field.offset.y};
-                const square = this.squares[sqPos.x][sqPos.y];
-                if (this.getSquareState(pos) != undefined && data[x][y] == 1) {
-                    square.setTemporaryState(data[x][y]);
+                    if (!additive || data[x][y] == 1) {
+                        square.setTemporaryState(data[x][y]);
+                    }
                 }
             }
         }

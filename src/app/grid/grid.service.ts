@@ -18,6 +18,7 @@ export class GridService {
   };
   lastClickedSquare: any;
   actualSquare: any;
+  drawSelected: boolean = false;
   
   constructor(private eventService: EventListenerService) {
     this.app = new Application; 
@@ -63,9 +64,13 @@ export class GridService {
     if (event.button == 0) 
       this.field.updateHistory();    
   }
-  handleGridMousemove(event: MouseEvent) {
+  handleGridMousemove(event: MouseEvent, forceUpdate: boolean = false) {
     const pos = {x: event.offsetX, y: event.offsetY};
-    this.actualSquare = this.field.getSquareData(pos);  
+    const actualSquare = this.field.getSquareData(pos);
+    if (!forceUpdate && this.actualSquare 
+      && this.actualSquare.position.x == actualSquare.position.x
+      && this.actualSquare.position.y == actualSquare.position.y) 
+        return
 
     if (ScrollBar.dragTarget && event.buttons === 1) {
       ScrollBar.dragTarget.moveTo(pos, this.app.canvas);
@@ -86,12 +91,10 @@ export class GridService {
           scrollbar.moveToPercent(this.field.getOffsetPercent(), this.app.canvas)
       });
     }
-    if (event.altKey && !event.shiftKey) {
-      this.field.drawSelected(this.actualSquare.position);
+    if (this.drawSelected) {
+      this.field.drawSelected(actualSquare.position, event.shiftKey);
     }
-    if (event.altKey && event.shiftKey) {
-      this.field.drawSelectedAdditive(this.actualSquare.position);
-    }
+    this.actualSquare = actualSquare;
   }
   handleGridWheel(event: WheelEvent) {
     const pos = {x: event.offsetX, y: event.offsetY};
@@ -100,7 +103,11 @@ export class GridService {
   handleGridKeyboard(event: KeyboardEvent) {
     //console.log(event.key);
     if (event.key === "Alt") {
-      this.field.drawSelected(this.actualSquare.position);
+      this.drawSelected = !this.drawSelected;
+      if (this.drawSelected)
+        this.field.drawSelected(this.actualSquare.position, event.shiftKey);
+      else
+        this.field.updateGrid();
     }
     if (event.ctrlKey && event.shiftKey && event.key === 'Escape') {
       this.field.clear();
@@ -139,9 +146,6 @@ export class GridService {
     }
   }
   handleGridKeyboardUp(event: KeyboardEvent) {
-    if (event.key === "Alt") {
-      this.field.updateGrid();
-    }
   }
 
 
