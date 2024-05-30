@@ -670,7 +670,7 @@ export class Field {
     }
     copySelected() {
         const selectedData = Array.from({ length: this.selection.gridEdges.size.X }, 
-            () => Array.from({ length: this.selection.gridEdges.size.X }, 
+            () => Array.from({ length: this.selection.gridEdges.size.Y }, 
                 () => SquareState.empty));
         for (let x = this.selection.fixedEdges.start.x; x <= this.selection.fixedEdges.end.x; x++) {
             for (let y = this.selection.fixedEdges.start.y; y <= this.selection.fixedEdges.end.y; y++) {
@@ -688,7 +688,7 @@ export class Field {
         for (let x = 0; x < data.length; x++) {
             for (let y = 0; y < data[0].length; y++) {
                 const pos = {x: startPosition.x+x, y: startPosition.y+y};
-                const sqPos = {x: pos.x-Field.offset.x, y:pos.y-Field.offset.x};
+                const sqPos = {x: pos.x-Field.offset.x, y:pos.y-Field.offset.y};
                 const square = this.squares[sqPos.x][sqPos.y];
                 if (this.getSquareState(pos) != undefined) {
                     square.setTemporaryState(data[x][y]);
