@@ -23,8 +23,8 @@ const config = {
     },
 
     PDF: {
-        pageSize: { width: 25, height: 35 },
-        squareSize: 60,
+        pageSize: { width: 40, height: 55 },
+        squareSize: 40,
         borderSize: 80,
     },
 
