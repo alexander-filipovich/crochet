@@ -2,11 +2,14 @@ import { Component } from '@angular/core';
 import { EventType } from '../events/event-listener.model';
 import { EventListenerService } from '../events/event-listener.service';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import jsPDF from 'jspdf';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-menu',
   standalone: true,
-  imports: [ ReactiveFormsModule, FormsModule ],
+  imports: [ CommonModule, ReactiveFormsModule, FormsModule ],
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.scss'
 })
@@ -16,7 +19,11 @@ export class MenuComponent {
   startRow: boolean = true;
   projectName: string = '';
 
-  constructor(private eventService: EventListenerService) {
+  showModal: boolean = false;
+  inputData: string = '';
+  pdfSrc: SafeResourceUrl | null = null;  
+
+  constructor(private eventService: EventListenerService, private sanitizer: DomSanitizer) {
     this.dimensionsForm = new FormGroup({
       width: new FormControl(50),
       height: new FormControl(30)
@@ -24,6 +31,20 @@ export class MenuComponent {
     const projectNameStored = localStorage.getItem('projectName');
     this.projectName = projectNameStored ?? this.projectName;
     this.setListeners();
+  }
+
+  openModal(): void {
+    this.showModal = true;
+  }
+  closeModal(): void {
+    this.showModal = false;
+  }
+  generatePDF(): void {
+    console.log("generatePDF");
+    const pdf = new jsPDF();
+    pdf.text(`Input Data: ${this.inputData}`, 20, 20);
+    const blob = pdf.output('blob');
+    this.pdfSrc = this.sanitizer.bypassSecurityTrustResourceUrl(URL.createObjectURL(blob)); 
   }
 
   openFile(event: Event) {

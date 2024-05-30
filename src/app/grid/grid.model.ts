@@ -433,7 +433,10 @@ export class FieldToPDF {
             }
         }
     
-        pdf.save(fileName);
+        //pdf.save(fileName);
+        const blob = pdf.output('blob');
+        const blobURL = URL.createObjectURL(blob);
+        window.open(blobURL, '_blank');
     }
 }
 
