@@ -33,20 +33,6 @@ export class MenuComponent {
     this.setListeners();
   }
 
-  openModal(): void {
-    this.showModal = true;
-  }
-  closeModal(): void {
-    this.showModal = false;
-  }
-  generatePDF(): void {
-    console.log("generatePDF");
-    const pdf = new jsPDF();
-    pdf.text(`Input Data: ${this.inputData}`, 20, 20);
-    const blob = pdf.output('blob');
-    this.pdfSrc = this.sanitizer.bypassSecurityTrustResourceUrl(URL.createObjectURL(blob)); 
-  }
-
   openFile(event: Event) {
     const target = event.target as HTMLInputElement;
     if (!target.files) return;
@@ -77,6 +63,21 @@ export class MenuComponent {
   saveToPDF() {
     const name = this.projectName ? this.projectName : 'data';
     this.eventService.emitEvent({ type: EventType.SaveToPDF, payload: {fileName: `${name}.pdf`} });
+  }
+  generatePDF(): void {
+    this.eventService.emitEvent({ type: EventType.GeneratePDF, payload: {fileName: `${name}.pdf`} });
+
+    //console.log("generatePDF");
+    //const pdf = new jsPDF();
+    //pdf.text(`Input Data: ${this.inputData}`, 20, 20);
+    //const blob = pdf.output('blob');
+    //this.pdfSrc = this.sanitizer.bypassSecurityTrustResourceUrl(URL.createObjectURL(blob)); 
+  }
+  openModal(): void {
+    this.showModal = true;
+  }
+  closeModal(): void {
+    this.showModal = false;
   }
 
   clearField() {
@@ -120,6 +121,11 @@ export class MenuComponent {
           });
           if (event.payload.projectName)
             this.projectName = event.payload.projectName;
+          break;
+          case EventType.UpdatePopupPDF:
+            const pdf = event.payload;
+            const blob = pdf.output('blob');
+            this.pdfSrc = this.sanitizer.bypassSecurityTrustResourceUrl(URL.createObjectURL(blob)); 
           break;
       }
     });

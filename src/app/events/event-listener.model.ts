@@ -5,6 +5,8 @@ export enum EventType {
   OpenFile,
   SaveFile,
   SaveToPDF,
+  GeneratePDF,
+  UpdatePopupPDF,
   UpdateUI,
   Copy,
   Paste,

@@ -369,8 +369,6 @@ export class FieldToPDF {
         pdf.link(fullTextStartX, textY - 10, linkTextWidth, 10, { url: 'https://www.mycrochet.live' });
     }
     
-    
-    
     static async exportPixelFieldToPDF(field: Field, fileName: string) {
         const segmentSize = config.PDF.pageSize;
         const squareSize = config.PDF.squareSize;
@@ -434,9 +432,12 @@ export class FieldToPDF {
         }
     
         //pdf.save(fileName);
-        const blob = pdf.output('blob');
-        const blobURL = URL.createObjectURL(blob);
-        window.open(blobURL, '_blank');
+        
+        //const blob = pdf.output('blob');
+        //const blobURL = URL.createObjectURL(blob);
+        //window.open(blobURL, '_blank');
+        
+        return pdf;
     }
 }
 
@@ -523,7 +524,9 @@ export class Field {
         window.URL.revokeObjectURL(url);
     }
     saveToPDF(fileName: string) {
-        FieldToPDF.exportPixelFieldToPDF(this, fileName)
+        FieldToPDF.exportPixelFieldToPDF(this, fileName).then(pdf => {
+            this.eventService.emitEvent({ type: EventType.UpdatePopupPDF, payload: pdf });
+        });
     }
 
     updateHistory() {
