@@ -178,7 +178,7 @@ export class GridService {
           this.field.saveFile(event.payload.fileName);
           break;
         case EventType.GeneratePDF:
-          this.field.saveToPDF(event.payload.fileName);
+          this.field.saveToPDF(event.payload.pageWidth, event.payload.pixelSize);
           break;
         case EventType.Copy:
           this.field.copySelected();

@@ -369,10 +369,13 @@ export class FieldToPDF {
         pdf.link(fullTextStartX, textY - 10, linkTextWidth, 10, { url: 'https://www.mycrochet.live' });
     }
     
-    static async exportPixelFieldToPDF(field: Field, fileName: string) {
-        const segmentSize = config.PDF.pageSize;
-        const squareSize = config.PDF.squareSize;
-        const borderSize = config.PDF.borderSize;
+    static async exportPixelFieldToPDF(field: Field, pageWidth: number, pixelSize: number) {
+        const segmentSize = {
+            width: pageWidth,
+            height: Math.round(pageWidth*1.4),
+        };
+        const squareSize = pixelSize;
+        const borderSize = squareSize;
         const { filledSquareImage, emptySquareImage, primaryColorSquareImage, primaryCrossImage, backgroundCrossImage } = await this.initializeTextures();
         const pdf = new jsPDF({
             orientation: 'portrait',
@@ -523,8 +526,8 @@ export class Field {
         a.click();
         window.URL.revokeObjectURL(url);
     }
-    saveToPDF(fileName: string) {
-        FieldToPDF.exportPixelFieldToPDF(this, fileName).then(pdf => {
+    saveToPDF(pageWidth: number, pixelSize: number) {
+        FieldToPDF.exportPixelFieldToPDF(this, pageWidth, pixelSize).then(pdf => {
             this.eventService.emitEvent({ type: EventType.UpdatePopupPDF, payload: pdf });
         });
     }

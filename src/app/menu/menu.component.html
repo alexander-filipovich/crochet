@@ -3,7 +3,7 @@
 <div class="block">
     <div class="objectHolder"><p class="textBold">Canvas size</p></div>
     <div class="objectRowHolder">
-            <p class="textSimple">Width</p>
+        <p class="textSimple">Width</p>
         <input type="number" min="1" max="1000" class="txtField smallInputField" 
             [formControl]="$any(dimensionsForm.get('width'))">
     </div>
@@ -73,13 +73,19 @@
 </div>
 
 <div class="modal" *ngIf="showModal">
-  <div class="modal-content">
-    <span class="close" (click)="closeModal()">&times;</span>
-    <form (ngSubmit)="generatePDF()">
-      <label for="inputData">Enter Data:</label>
-      <input type="text" [(ngModel)]="inputData" name="inputData" required>
-      <button type="submit">Submit</button>
-    </form>
-    <iframe *ngIf="pdfSrc" [src]="pdfSrc" style="width:100%; height:500px;"></iframe>
+    <div class="modal-content">
+      <span class="close" (click)="closeModal()">&times;</span>
+      <form [formGroup]="pdfConfigForm" (ngSubmit)="generatePDF()" class="pdf-form">
+          <div class="form-group">
+              <label for="width">Width</label>
+              <input type="number" id="width" formControlName="pageWidth" class="input-field" required>
+          </div>
+          <div class="form-group">
+              <label for="pixelSize">Pixel size</label>
+              <input type="range" id="pixelSize" formControlName="pixelSize" class="input-field" min="20" max="100" step="10" required>
+          </div>
+          <button type="submit" class="generate-btn">GENERATE</button>
+      </form>
+      <iframe *ngIf="pdfSrc" [src]="pdfSrc"></iframe>
+    </div>
   </div>
-</div>
