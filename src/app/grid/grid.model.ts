@@ -337,7 +337,7 @@ export class FieldToPDF {
         }
     
         // Footer text setup
-        const fontSize = 45;
+        const fontSize = pageSize.getWidth() / 30;
         const fullText = "Mycrochet.live - free pattern creator for mosaic crochet schemes";
         const linkText = "Mycrochet.live";
         const otherText = " - free pattern creator for mosaic crochet schemes";
@@ -352,7 +352,7 @@ export class FieldToPDF {
     
         // Calculate the starting X coordinate to center the full text
         const fullTextStartX = (pageSize.getWidth() - fullTextWidth) / 2;
-        const textY = pageSize.getHeight() - 100; // Adjusted to not overlap with the grid
+        const textY = pageSize.getHeight() - size; // Adjusted to not overlap with the grid
     
         // Render the clickable part of the text
         pdf.setTextColor(69, 98, 123); // Blue color for link
@@ -375,7 +375,7 @@ export class FieldToPDF {
             height: Math.round(pageWidth*1.4),
         };
         const squareSize = pixelSize;
-        const borderSize = squareSize;
+        const borderSize = segmentSize.width * squareSize * 0.03;
         const { filledSquareImage, emptySquareImage, primaryColorSquareImage, primaryCrossImage, backgroundCrossImage } = await this.initializeTextures();
         const pdf = new jsPDF({
             orientation: 'portrait',
@@ -557,6 +557,7 @@ export class Field {
         }
         Field.fieldSize = size;
         this.fieldData = fieldData;
+        this.updateHistory();
         this.updateGrid();
     }
 

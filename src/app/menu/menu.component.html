@@ -78,7 +78,7 @@
       <form [formGroup]="pdfConfigForm" (ngSubmit)="generatePDF()" class="popup">
           <div class="form-group">
               <label for="width" class="textSimple">Width</label>
-              <input type="number" id="width" formControlName="pageWidth" class="input-field" required>
+              <input type="number" id="width" formControlName="pageWidth" class="input-field" min="20" max="100" required>
               <p class="textSimple">cells</p>
           </div>
           <!--div class="form-group">
