@@ -659,6 +659,7 @@ export class Field {
     }
     clear() {
         this.fieldData = Array.from({ length: Field.fieldSize.X }, () => Array.from({ length: Field.fieldSize.Y }, () => SquareState.empty));
+        this.updateHistory();
         this.updateGrid();
     }
 
