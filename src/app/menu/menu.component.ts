@@ -5,6 +5,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { CommonModule } from '@angular/common';
 import jsPDF from 'jspdf';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { config } from '../../config';
 
 @Component({
   selector: 'app-menu',
@@ -15,6 +16,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 })
 export class MenuComponent {
   dimensionsForm: FormGroup;
+  pdfConfigForm: FormGroup;
   isDrawCrossChecked: boolean = false;
   startRow: boolean = true;
   projectName: string = '';
@@ -27,6 +29,10 @@ export class MenuComponent {
     this.dimensionsForm = new FormGroup({
       width: new FormControl(50),
       height: new FormControl(30)
+    });
+    this.pdfConfigForm = new FormGroup({
+      pageWidth: new FormControl(config.PDF.pageSize.width),
+      pixelSize: new FormControl(config.PDF.squareSize)
     });
     const projectNameStored = localStorage.getItem('projectName');
     this.projectName = projectNameStored ?? this.projectName;
@@ -65,16 +71,13 @@ export class MenuComponent {
     this.eventService.emitEvent({ type: EventType.SaveToPDF, payload: {fileName: `${name}.pdf`} });
   }
   generatePDF(): void {
-    this.eventService.emitEvent({ type: EventType.GeneratePDF, payload: {fileName: `${name}.pdf`} });
-
-    //console.log("generatePDF");
-    //const pdf = new jsPDF();
-    //pdf.text(`Input Data: ${this.inputData}`, 20, 20);
-    //const blob = pdf.output('blob');
-    //this.pdfSrc = this.sanitizer.bypassSecurityTrustResourceUrl(URL.createObjectURL(blob)); 
+    const pageWidth = this.pdfConfigForm.get('pageWidth')?.value;
+    const pixelSize = this.pdfConfigForm.get('pixelSize')?.value;
+    this.eventService.emitEvent({ type: EventType.GeneratePDF, payload: {pageWidth: pageWidth, pixelSize: pixelSize} });
   }
   openModal(): void {
     this.showModal = true;
+    this.generatePDF();
   }
   closeModal(): void {
     this.showModal = false;
