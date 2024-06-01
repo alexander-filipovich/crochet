@@ -3,7 +3,6 @@ import { EventType } from '../events/event-listener.model';
 import { EventListenerService } from '../events/event-listener.service';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import jsPDF from 'jspdf';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { config } from '../../config';
 
@@ -23,7 +22,8 @@ export class MenuComponent {
 
   showModal: boolean = false;
   inputData: string = '';
-  pdfSrc: SafeResourceUrl | null = null;  
+  pdfSrc: string = '';
+  pdfSrcSafe: SafeResourceUrl | null = null;  
 
   constructor(private eventService: EventListenerService, private sanitizer: DomSanitizer) {
     this.dimensionsForm = new FormGroup({
@@ -63,17 +63,26 @@ export class MenuComponent {
 
 
   downloadData() {
-    const name = this.projectName ? this.projectName : 'data';
+    const name = this.projectName ? this.projectName : 'crochet';
     this.eventService.emitEvent({ type: EventType.SaveFile, payload: {fileName: `${name}.json`} });
-  }
-  saveToPDF() {
-    const name = this.projectName ? this.projectName : 'data';
-    this.eventService.emitEvent({ type: EventType.SaveToPDF, payload: {fileName: `${name}.pdf`} });
   }
   generatePDF(): void {
     const pageWidth = this.pdfConfigForm.get('pageWidth')?.value;
     const pixelSize = this.pdfConfigForm.get('pixelSize')?.value;
     this.eventService.emitEvent({ type: EventType.GeneratePDF, payload: {pageWidth: pageWidth, pixelSize: pixelSize} });
+  }
+  saveToPDF() {
+    const name = this.projectName ? this.projectName : 'crochet';
+    const url = this.pdfSrc;
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${name}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    URL.revokeObjectURL(url);
   }
   openModal(): void {
     this.showModal = true;
@@ -128,7 +137,8 @@ export class MenuComponent {
           case EventType.UpdatePopupPDF:
             const pdf = event.payload;
             const blob = pdf.output('blob');
-            this.pdfSrc = this.sanitizer.bypassSecurityTrustResourceUrl(URL.createObjectURL(blob)); 
+            this.pdfSrc = URL.createObjectURL(blob);
+            this.pdfSrcSafe = this.sanitizer.bypassSecurityTrustResourceUrl(URL.createObjectURL(blob)); 
           break;
       }
     });

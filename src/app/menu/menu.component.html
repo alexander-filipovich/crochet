@@ -80,12 +80,13 @@
               <label for="width">Width</label>
               <input type="number" id="width" formControlName="pageWidth" class="input-field" required>
           </div>
-          <div class="form-group">
+          <!--div class="form-group">
               <label for="pixelSize">Pixel size</label>
               <input type="range" id="pixelSize" formControlName="pixelSize" class="input-field" min="20" max="100" step="10" required>
-          </div>
+          </div-->
           <button type="submit" class="generate-btn">GENERATE</button>
       </form>
-      <iframe *ngIf="pdfSrc" [src]="pdfSrc"></iframe>
+      <iframe *ngIf="pdfSrc" [src]="pdfSrcSafe"></iframe>
+      <button class="filled Huge" (click)="saveToPDF()"><i class="fa-solid fa-floppy-disk icons"></i>Save PDF</button>
     </div>
   </div>
