@@ -135,6 +135,7 @@ export class GridService {
       this.field.clearSelection();
     }
     if (event.ctrlKey && event.code === 'KeyZ') {
+      event.preventDefault();
       this.field.undo();
     }
     if (event.key === 'Delete'){
@@ -210,7 +211,6 @@ export class GridService {
 
     setInterval(() => {
       localStorage.setItem('fieldData', JSON.stringify(this.field.fieldData));
-      localStorage.setItem('fieldSize', JSON.stringify(Field.fieldSize));
     }, config.timeouts.autoSave);
 
   }

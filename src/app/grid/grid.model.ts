@@ -467,12 +467,11 @@ export class Field {
     constructor(app: Application, eventService: EventListenerService) {
         this.app = app;
         this.eventService = eventService;
-        const fieldSizeStored = localStorage.getItem('fieldSize');
-        Field.fieldSize = fieldSizeStored ? JSON.parse(fieldSizeStored) : Field.fieldSize;
         const fieldDataStored = localStorage.getItem('fieldData');
         this.fieldData = fieldDataStored ? 
             JSON.parse(fieldDataStored) : 
             Array.from({ length: Field.fieldSize.X }, () => Array.from({ length: Field.fieldSize.Y }, () => SquareState.empty));
+        this.updateFieldSize();
         this.squares = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Square()));
         this.selection = new FieldSelection();
         this.app.stage.addChild(this.selection.overlay);
@@ -510,9 +509,9 @@ export class Field {
                     fieldData[x][y] = data?.[size.Y-y-1]?.[size.X-x-1] ?? 0;
                 }
             }
-            Field.fieldSize = size;
             this.fieldData = fieldData;
         }
+        this.updateFieldSize();
         this.updateGrid();
         this.sendUpdateMenuEvent(file.name);
     }
@@ -543,11 +542,18 @@ export class Field {
             this.history.pop();
             
             this.fieldData = JSON.parse(this.history.at(-1))
+            if (this.fieldData.length != Field.fieldSize.X || this.fieldData[0].length != Field.fieldSize.Y) {
+                this.updateFieldSize();
+            }
             this.clearGrid();
             this.updateGrid();
         }
     }
 
+    updateFieldSize() {
+        Field.fieldSize = {X: this.fieldData.length, Y: this.fieldData[0].length};
+        this.sendUpdateMenuEvent();
+    }
     changeFieldSize(size: GridSize) {
         const fieldData = Array.from({ length: size.X }, () => Array.from({ length: size.Y }, () => SquareState.empty));
         for (let x = 0; x < Math.min(size.X, Field.fieldSize.X); x++) {
