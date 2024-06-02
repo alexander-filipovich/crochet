@@ -24,6 +24,12 @@
       width: 90%;
   }
 
+  a{
+    width: 100%;
+  }
+
+  
+
   .smallInputField{
     margin-top: 5%;
     margin-bottom: 5%;
@@ -139,6 +145,13 @@
     margin-right: 5%;
 }
 
+    .copyrights{
+      font-size: 10pt;
+      color: #b49881;
+      margin-left: 3%;
+      font-style: italic;
+    }
+
     button.filled{
         flex-grow: 1;
         font-size: 12pt;
@@ -164,7 +177,9 @@
         height: 50px;
     }
 
-   
+   button.Manual{
+    background-color: #9dbd8b;
+   }
 
     button.Clear {
         background-color: #D37676;
