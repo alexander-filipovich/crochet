@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { Subject, BehaviorSubject  } from 'rxjs';
-import { AppEvent, EventType } from './event-listener.model';
+import { Subject, BehaviorSubject, ReplaySubject  } from 'rxjs';
+import { AppEvent } from './event-listener.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class EventListenerService {
-  private eventSource = new Subject<AppEvent>();
+  private eventSource = new ReplaySubject<AppEvent>(10);
   events$ = this.eventSource.asObservable();
 
   private drawCrossCheckbox = new BehaviorSubject<boolean>(false);

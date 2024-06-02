@@ -475,7 +475,6 @@ export class Field {
         this.squares = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Square()));
         this.selection = new FieldSelection();
         this.app.stage.addChild(this.selection.overlay);
-        this.sendUpdateMenuEvent();
         this.updateHistory();
     }
     init() {}
