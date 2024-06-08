@@ -9,7 +9,7 @@ export class EventListenerService {
   private eventSource = new ReplaySubject<AppEvent>(10);
   events$ = this.eventSource.asObservable();
 
-  private drawCrossCheckbox = new BehaviorSubject<boolean>(false);
+  private drawCrossCheckbox = new BehaviorSubject<boolean>(true);
   isDrawCrossChecked$ = this.drawCrossCheckbox.asObservable();
 
   private changeFirstRow = new BehaviorSubject<number>(0);

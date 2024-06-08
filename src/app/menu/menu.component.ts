@@ -16,8 +16,8 @@ import { config } from '../../config';
 export class MenuComponent {
   dimensionsForm: FormGroup;
   pdfConfigForm: FormGroup;
-  isDrawCrossChecked: boolean = false;
-  startRow: boolean = true;
+  isDrawCrossChecked!: boolean;
+  startRow!: boolean;
   projectName: string = '';
 
   showModal: boolean = false;

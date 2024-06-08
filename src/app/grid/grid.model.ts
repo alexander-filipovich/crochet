@@ -458,7 +458,7 @@ export class Field {
 
     fieldData: Array<Array<number>>;
     squares: Array<Array<Square>>;
-    drawCrosses: boolean = false;
+    drawCrosses: boolean = true;
     static startRow: number = 1;
     static colorCheck: boolean = false;
 
@@ -478,10 +478,10 @@ export class Field {
         }
         else {
             this.fieldData = Array.from({ length: 1 }, () => Array.from({ length: 1 }, () => SquareState.empty));
-            this.http.get('assets/defaultField.json').subscribe({
+            this.http.get('assets/DefaultField.json').subscribe({
                 next: (data) => {
                 const jsonString = JSON.stringify(data);
-                const file = new File([jsonString], 'defaultField.json', { type: 'application/json' });
+                const file = new File([jsonString], 'Default.json', { type: 'application/json' });
                 this.loadFile(file);
                 },
                 error: (error) => console.error('Error loading JSON file:', error)
