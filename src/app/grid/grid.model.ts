@@ -475,6 +475,7 @@ export class Field {
         if (fieldDataStored) {
             this.fieldData = JSON.parse(fieldDataStored);
             this.updateFieldSize();
+            this.updateHistory();
         }
         else {
             this.fieldData = Array.from({ length: 1 }, () => Array.from({ length: 1 }, () => SquareState.empty));
@@ -490,7 +491,6 @@ export class Field {
         this.squares = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Square()));
         this.selection = new FieldSelection();
         this.app.stage.addChild(this.selection.overlay);
-        this.updateHistory();
     }
     init() {}
 
@@ -526,6 +526,7 @@ export class Field {
             this.fieldData = fieldData;
         }
         this.updateFieldSize();
+        this.updateHistory();
         this.updateGrid();
         this.sendUpdateMenuEvent(file.name);
     }
