@@ -462,7 +462,8 @@ export class Field {
     static startRow: number = 1;
     static colorCheck: boolean = false;
 
-    history: any[] = [];
+    undoHistory: any[] = [];
+    redoHistory: any[] = [];
 
     selection: FieldSelection;
     
@@ -544,23 +545,32 @@ export class Field {
         });
     }
 
-    updateHistory() {
-        if (this.history.length === config.history.maxSize) {
-            this.history.shift();
+    updateHistory() {        
+        if (this.undoHistory.length === config.history.maxSize) {
+            this.undoHistory.shift();
         }
-        this.history.push(JSON.stringify(this.fieldData));
+        this.undoHistory.push(JSON.stringify(this.fieldData));
+        this.redoHistory.length = 0;
     }
     undo() {
-        if (this.history.length > 1) {
-            this.history.pop();
-            
-            this.fieldData = JSON.parse(this.history.at(-1))
-            if (this.fieldData.length != Field.fieldSize.X || this.fieldData[0].length != Field.fieldSize.Y) {
-                this.updateFieldSize();
-            }
-            this.clearGrid();
-            this.updateGrid();
+        if (this.undoHistory.length > 1) {
+            this.redoHistory.push(this.undoHistory.pop());
+            this.drawActual();
         }
+    }
+    redo() {
+        if (this.redoHistory.length > 0) {
+            this.undoHistory.push(this.redoHistory.pop());
+            this.drawActual();
+        }
+    }
+    drawActual() {
+        this.fieldData = JSON.parse(this.undoHistory.at(-1))
+        if (this.fieldData.length != Field.fieldSize.X || this.fieldData[0].length != Field.fieldSize.Y) {
+            this.updateFieldSize();
+        }
+        this.clearGrid();
+        this.updateGrid();
     }
 
     updateFieldSize() {

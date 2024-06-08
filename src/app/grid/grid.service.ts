@@ -135,9 +135,13 @@ export class GridService {
       this.field.cutSelected();
       this.field.clearSelection();
     }
-    if ((event.ctrlKey || event.metaKey) && event.code === 'KeyZ') {
+    if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.code === 'KeyZ') {
       event.preventDefault();
       this.field.undo();
+    }
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.code === 'KeyZ') {
+      event.preventDefault();
+      this.field.redo();
     }
     if (event.key === 'Delete'){
       this.field.clearSelected();
