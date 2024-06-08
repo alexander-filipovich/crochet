@@ -5,6 +5,7 @@ import { Cross, Field, FieldSelection, Point, ScrollBar, Square, SquareState } f
 import { EventType } from '../events/event-listener.model';
 import { EventListenerService } from '../events/event-listener.service';
 import { Subscription } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
@@ -20,9 +21,9 @@ export class GridService {
   actualSquare: any;
   drawSelected: boolean = false;
   
-  constructor(private eventService: EventListenerService) {
+  constructor(private eventService: EventListenerService, private http: HttpClient) {
     this.app = new Application; 
-    this.field = new Field(this.app, this.eventService);
+    this.field = new Field(this.app, this.eventService, this.http);
     this.lastClickedSquare = this.field.getSquareData({x: 0, y: 0});
   }
   async init() {

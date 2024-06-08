@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { config } from '../../config';
 import { EventType } from '../events/event-listener.model';
 import { EventListenerService } from '../events/event-listener.service';
@@ -447,6 +448,7 @@ export class FieldToPDF {
 export class Field {
     app: Application;
     eventService: EventListenerService;
+    http: HttpClient;
 
     static fieldSize: GridSize = { X: 50, Y: 30 };
 
@@ -464,14 +466,26 @@ export class Field {
 
     selection: FieldSelection;
     
-    constructor(app: Application, eventService: EventListenerService) {
+    constructor(app: Application, eventService: EventListenerService, http: HttpClient) {
         this.app = app;
         this.eventService = eventService;
+        this.http = http;
         const fieldDataStored = localStorage.getItem('fieldData');
-        this.fieldData = fieldDataStored ? 
-            JSON.parse(fieldDataStored) : 
-            Array.from({ length: Field.fieldSize.X }, () => Array.from({ length: Field.fieldSize.Y }, () => SquareState.empty));
-        this.updateFieldSize();
+        if (fieldDataStored) {
+            this.fieldData = JSON.parse(fieldDataStored);
+            this.updateFieldSize();
+        }
+        else {
+            this.fieldData = Array.from({ length: 1 }, () => Array.from({ length: 1 }, () => SquareState.empty));
+            this.http.get('assets/defaultField.json').subscribe({
+                next: (data) => {
+                const jsonString = JSON.stringify(data);
+                const file = new File([jsonString], 'defaultField.json', { type: 'application/json' });
+                this.loadFile(file);
+                },
+                error: (error) => console.error('Error loading JSON file:', error)
+            });
+        }
         this.squares = Array.from({ length: 0 }, () => Array.from({ length: 0 }, () => new Square()));
         this.selection = new FieldSelection();
         this.app.stage.addChild(this.selection.overlay);
