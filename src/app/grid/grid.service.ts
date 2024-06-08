@@ -109,7 +109,7 @@ export class GridService {
       else
         this.field.updateGrid();
     }
-    if (event.ctrlKey && event.shiftKey && event.key === 'Escape') {
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'Escape') {
       this.field.clear();
     }
     if (event.key === '-'){
@@ -118,23 +118,23 @@ export class GridService {
     if (event.key === '='){
       this.field.changeSquareSize(5, {x: 0, y: 0});
     }
-    if (event.ctrlKey && event.code ==='KeyC') {
+    if ((event.ctrlKey || event.metaKey) && event.code ==='KeyC') {
       this.field.copySelected();
       this.field.clearSelection();
     }
-    if (event.ctrlKey && !event.shiftKey && event.code === 'KeyV') {
+    if ((event.ctrlKey || event.metaKey) && !event.shiftKey && event.code === 'KeyV') {
       this.field.pasteSelected(this.actualSquare.position);
       this.field.clearSelection();
     }
-    if (event.ctrlKey && event.shiftKey && event.code === 'KeyV') {
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.code === 'KeyV') {
       this.field.pasteSelectedAdditive(this.actualSquare.position);
       this.field.clearSelection();
     }
-    if (event.ctrlKey && event.code === 'KeyX') {
+    if ((event.ctrlKey || event.metaKey) && event.code === 'KeyX') {
       this.field.cutSelected();
       this.field.clearSelection();
     }
-    if (event.ctrlKey && event.code === 'KeyZ') {
+    if ((event.ctrlKey || event.metaKey) && event.code === 'KeyZ') {
       event.preventDefault();
       this.field.undo();
     }
