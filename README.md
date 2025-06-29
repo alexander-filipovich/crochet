@@ -52,5 +52,5 @@ Paused. Code remains public, feel free to fork or extend.
 
 ## 📂 Code
 
-[github.com/yourusername/mycrochet](https://github.com/alexander-filipovich/crochet/)
+[github.com](https://github.com/alexander-filipovich/crochet/)
 
