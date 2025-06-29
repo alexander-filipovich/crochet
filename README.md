@@ -29,7 +29,7 @@ Make a modern, intuitive crochet pattern editor that:
 
 ## 📊 Market Test
 
-- 🔗 Launched on r/knitting (2024)  
+- 🔗 Launched on [r/brochet](https://www.reddit.com/r/Brochet/s/bKGkN3M69r) (2024)  
 - 📈 17,000 views, 250+ upvotes, ~500 direct clicks  
 - 💬 Positive feedback didn't translate into activation: beginner users preferred pre-made patterns; sellers leaned toward more complex tools  
 - 🧮 LTV estimate too low to justify further dev -> MVP paused after public release
@@ -49,4 +49,3 @@ Make a modern, intuitive crochet pattern editor that:
 ## 🚧 Status
 
 Paused. Code remains public, feel free to fork or extend.
-
