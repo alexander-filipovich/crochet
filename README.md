@@ -50,7 +50,3 @@ Make a modern, intuitive crochet pattern editor that:
 
 Paused. Code remains public, feel free to fork or extend.
 
-## 📂 Code
-
-[github.com](https://github.com/alexander-filipovich/crochet/)
-
